@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, Plus, Edit2, Briefcase, CheckSquare, Coffee, BookOpen, Target, Sparkles, AlertCircle } from 'lucide-react';
+import { Clock, Plus, Edit2, Briefcase, CheckSquare, Coffee, BookOpen, Target, Sparkles, Play, AlertCircle } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { TimeSession, TimeSessionCategory } from '@/lib/types/database';
 import { toBengaliNumber } from '@/lib/utils/bangla';
@@ -154,18 +154,42 @@ export const WorkTimeline: React.FC = () => {
       </div>
 
       {sortedSessions.length === 0 ? (
-        <div className="py-10 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-          <Clock className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            {language === 'bn'
-              ? 'আজ এখনও কোনো কাজের সেশন রেকর্ড হয়নি।'
-              : 'No time sessions recorded for today yet.'}
-          </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm mx-auto">
-            {language === 'bn'
-              ? 'উপরের "Focus শুরু" বাটনটি চেপে প্রথম সেশনটি শুরু করে দিন!'
-              : 'Click "Start Focus" above to begin tracking your work!'}
-          </p>
+        <div className="py-10 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
+          <Clock className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {language === 'bn'
+                ? 'আজকের কোনো tracked session নেই।'
+                : 'No tracked sessions for today.'}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+              {language === 'bn'
+                ? 'লাইভ ফোকাস টাইমার চালু করে দিন শুরু করুন অথবা পূর্বে শেষ হওয়া সেশন যোগ করুন।'
+                : 'Start a live focus session or add a past offline session.'}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            <button
+              onClick={() => {
+                const el = document.getElementById('focus-control');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>{language === 'bn' ? 'Focus শুরু করুন' : 'Start Focus'}</span>
+            </button>
+            <button
+              onClick={() => {
+                setEditingSession(null);
+                setIsAddModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{language === 'bn' ? 'অফলাইন সেশন যোগ' : 'Add Session'}</span>
+            </button>
+          </div>
         </div>
       ) : (
         <div className="relative pl-6 sm:pl-8 space-y-4 before:absolute before:left-2.5 sm:before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">

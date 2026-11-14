@@ -7,6 +7,10 @@ import {
   ShieldAlert,
   Sparkles,
   Sliders,
+  Play,
+  Timer,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { ProgressRing } from '@/components/dashboard/ProgressRing';
@@ -31,6 +35,10 @@ export default function TodayDashboardPage() {
     dailyLog,
     prayerLog,
     settings,
+    todaySessions,
+    activeSession,
+    errorMessage,
+    refreshData,
     addTask,
     updateTask,
     toggleTaskComplete,
@@ -61,6 +69,23 @@ export default function TodayDashboardPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-300">
+      {/* Error state with retry */}
+      {errorMessage && (
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center justify-between text-rose-800 dark:text-rose-200 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span>ডেটা লোড করতে সমস্যা হয়েছে: {errorMessage}</span>
+          </div>
+          <button
+            onClick={() => refreshData()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 text-white font-semibold text-xs hover:bg-rose-700 transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>পুনরায় চেষ্টা করুন</span>
+          </button>
+        </div>
+      )}
+
       {/* 1. Greeting & Hero Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 dark:from-emerald-950 dark:via-stone-900 dark:to-emerald-900 rounded-3xl p-6 sm:p-8 text-white shadow-lg shadow-emerald-900/10">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -118,6 +143,8 @@ export default function TodayDashboardPage() {
                 <span className="text-xs text-emerald-100/80 block">
                   {totalCount > completedCount
                     ? `${toBanglaNumber(totalCount - completedCount)} টি বাকি`
+                    : totalCount === 0
+                    ? 'আজকের কাজ বাকি নেই'
                     : 'সব কাজ শেষ আলহামদুলিল্লাহ!'}
                 </span>
               </div>
@@ -128,6 +155,42 @@ export default function TodayDashboardPage() {
         {/* Ambient background blur elements */}
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
       </div>
+
+      {/* First-Use Empty State Banner */}
+      {todayTasks.length === 0 && todaySessions.length === 0 && !activeSession && (
+        <div className="p-6 bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-stone-50/90 dark:from-emerald-950/30 dark:via-stone-900/40 dark:to-stone-900/80 rounded-3xl border border-emerald-200/90 dark:border-emerald-800/60 shadow-xs text-center space-y-3 animate-in fade-in">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
+            <Timer className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-base sm:text-lg text-stone-900 dark:text-stone-100">
+              আজ এখনো কোনো কাজ বা সময়ের session যোগ করা হয়নি। Focus শুরু করে দিন শুরু করো।
+            </h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              একটি নির্দিষ্ট লক্ষ্য নিয়ে টাইমার অন করুন অথবা আজকের প্রথম গুরুত্বপূর্ণ কাজটি যুক্ত করুন।
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+            <button
+              onClick={() => {
+                const el = document.getElementById('focus-control');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm active:scale-95 transition-all flex items-center gap-2"
+            >
+              <Play className="w-4 h-4 fill-current" />
+              <span>Focus শুরু করুন</span>
+            </button>
+            <button
+              onClick={() => setIsAddTaskOpen(true)}
+              className="px-4 py-2.5 rounded-2xl bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700 font-bold text-xs sm:text-sm shadow-xs active:scale-95 transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>কাজ যোগ করুন</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 2. Live Work Control (1-tap quick start, active timer, break, pomodoro) */}
       <LiveWorkControl />

@@ -65,7 +65,9 @@ export const PrayerQuickBar: React.FC<PrayerQuickBarProps> = ({
           </div>
         </div>
         <div className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-          {toBanglaNumber(completedCount)}/৫ ওয়াক্ত আদায়
+          {completedCount === 0
+            ? 'আজকের নামাজের update এখনো দেওয়া হয়নি'
+            : `${toBanglaNumber(completedCount)}/৫ ওয়াক্ত আদায়`}
         </div>
       </div>
 

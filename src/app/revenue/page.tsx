@@ -113,6 +113,28 @@ export default function RevenueHuntingPage() {
         </div>
       </div>
 
+      {/* Empty State Banner if no revenue */}
+      {revenue.length === 0 && (
+        <div className="p-6 bg-white dark:bg-[#1a1917] rounded-3xl border border-dashed border-stone-200 dark:border-stone-800 text-center space-y-3">
+          <DollarSign className="w-10 h-10 text-stone-300 dark:text-stone-600 mx-auto" />
+          <div className="space-y-1">
+            <h3 className="font-bold text-base sm:text-lg text-stone-900 dark:text-stone-100">
+              এখনো কোনো আয়ের record নেই।
+            </h3>
+            <p className="text-xs text-stone-500 max-w-sm mx-auto">
+              ক্লায়েন্ট পেমেন্ট বা অন্যান্য আয়ের তথ্য সংরক্ষণ করে তোমার আর্থিক লক্ষ্যের অগ্রগতি ট্র্যাক করো।
+            </p>
+          </div>
+          <button
+            onClick={() => setIsRevenueModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm active:scale-95 transition-all"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>আয় যোগ করুন</span>
+          </button>
+        </div>
+      )}
+
       {/* 1. Revenue Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-[#1a1917] p-5 rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-1">
@@ -254,7 +276,15 @@ export default function RevenueHuntingPage() {
 
             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
               {revenue.length === 0 ? (
-                <p className="text-xs text-stone-400 py-6 text-center">এখনো কোনো আয় এন্ট্রি নেই</p>
+                <div className="text-center py-6">
+                  <p className="text-xs text-stone-400 mb-2">এখনো কোনো আয়ের record নেই</p>
+                  <button
+                    onClick={() => setIsRevenueModalOpen(true)}
+                    className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    + আয় যোগ করুন
+                  </button>
+                </div>
               ) : (
                 revenue.map((r) => (
                   <div
@@ -311,7 +341,15 @@ export default function RevenueHuntingPage() {
 
         <div className="space-y-2">
           {huntingLogs.length === 0 ? (
-            <p className="text-xs text-stone-400 py-6 text-center">এখনো কোনো হান্টিং লগ নেই</p>
+            <div className="text-center py-6 border border-dashed border-stone-200 dark:border-stone-800 rounded-2xl">
+              <p className="text-xs text-stone-400 mb-2">এখনো কোনো hunting লগ যোগ করা হয়নি।</p>
+              <button
+                onClick={() => setIsHuntingModalOpen(true)}
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                + আউটরিচ লগ যোগ করুন
+              </button>
+            </div>
           ) : (
             huntingLogs.map((h) => (
               <div

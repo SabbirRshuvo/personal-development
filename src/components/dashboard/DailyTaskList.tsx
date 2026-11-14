@@ -126,13 +126,18 @@ export const DailyTaskList: React.FC<DailyTaskListProps> = ({
       </div>
 
       {filteredTasks.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-stone-200 dark:border-stone-800 rounded-2xl">
-          <p className="text-sm text-stone-500 dark:text-stone-400 mb-3">এই ফিল্টারে কোনো কাজ নেই</p>
+        <div className="text-center py-12 border border-dashed border-stone-200 dark:border-stone-800 rounded-2xl space-y-3">
+          <p className="text-sm font-semibold text-stone-700 dark:text-stone-300">
+            {tasks.length === 0
+              ? 'এখনো কোনো কাজ নেই। প্রথম কাজটি যোগ করো।'
+              : 'এই ফিল্টারে কোনো কাজ নেই'}
+          </p>
           <button
             onClick={onOpenAddTask}
-            className="px-4 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl hover:bg-emerald-100"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm active:scale-95 transition-all"
           >
-            + নতুন কাজ যোগ করুন
+            <Plus className="w-3.5 h-3.5" />
+            <span>কাজ যোগ করুন</span>
           </button>
         </div>
       ) : (

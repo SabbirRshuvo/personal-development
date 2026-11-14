@@ -236,15 +236,26 @@ export default function TasksPage() {
 
       {/* Task List */}
       {filteredTasks.length === 0 ? (
-        <div className="text-center py-16 bg-white dark:bg-[#1a1917] rounded-3xl border border-dashed border-stone-200 dark:border-stone-800">
-          <p className="text-stone-500 dark:text-stone-400 text-sm mb-3">
-            নির্দিষ্ট ফিল্টারে কোনো কাজ পাওয়া যায়নি
-          </p>
+        <div className="text-center py-16 bg-white dark:bg-[#1a1917] rounded-3xl border border-dashed border-stone-200 dark:border-stone-800 space-y-3">
+          <CheckSquare className="w-10 h-10 text-stone-300 dark:text-stone-600 mx-auto" />
+          <div className="space-y-1">
+            <p className="text-stone-800 dark:text-stone-200 font-bold text-base">
+              {tasks.length === 0
+                ? 'এখনো কোনো কাজ নেই। প্রথম কাজটি যোগ করো।'
+                : 'নির্দিষ্ট ফিল্টারে কোনো কাজ পাওয়া যায়নি'}
+            </p>
+            <p className="text-xs text-stone-500 max-w-sm mx-auto">
+              {tasks.length === 0
+                ? 'তোমার লক্ষ্যকে ছোট ছোট কাজে ভাগ করো এবং অগ্রাধিকার নির্ধারণ করো।'
+                : 'অন্যান্য ফিল্টার চেক করুন অথবা নতুন কাজ যুক্ত করুন।'}
+            </p>
+          </div>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 active:scale-95 transition-all shadow-sm"
           >
-            + নতুন কাজ যোগ করুন
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>কাজ যোগ করুন</span>
           </button>
         </div>
       ) : (

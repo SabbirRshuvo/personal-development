@@ -2,17 +2,18 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   CalendarDays,
   CheckSquare,
   Users,
-  Activity,
-  MoreHorizontal,
-  DollarSign,
   BarChart3,
+  Timer,
+  Play,
+  DollarSign,
   ShieldAlert,
   Settings,
+  Activity,
   X,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
@@ -20,11 +21,13 @@ import { toBanglaNumber } from '@/lib/utils/bangla';
 
 export const BottomNav: React.FC = () => {
   const pathname = usePathname();
-  const { tasks } = useData();
+  const router = useRouter();
+  const { tasks, activeSession } = useData();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const pendingCount = tasks.filter((t) => t.status !== 'সম্পন্ন').length;
 
+  // Exact 5 tabs: আজ | কাজ | Focus | ক্লায়েন্ট | রিপোর্ট
   const mainTabs = [
     { label: 'আজ', href: '/', icon: CalendarDays },
     {
@@ -33,13 +36,19 @@ export const BottomNav: React.FC = () => {
       icon: CheckSquare,
       badge: pendingCount > 0 ? toBanglaNumber(pendingCount) : undefined,
     },
+    {
+      label: 'Focus',
+      href: '/#focus-control',
+      icon: activeSession ? Timer : Play,
+      isFocus: true,
+    },
     { label: 'ক্লায়েন্ট', href: '/clients', icon: Users },
-    { label: 'ট্র্যাকার', href: '/tracker', icon: Activity },
+    { label: 'রিপোর্ট', href: '/reports', icon: BarChart3 },
   ];
 
   const moreItems = [
+    { label: 'ট্র্যাকার ও ইবাদত', href: '/tracker', icon: Activity, desc: 'দৈনিক নামাজ, ঘুম ও অভ্যাস হিসাব' },
     { label: 'আয় ও হান্টিং', href: '/revenue', icon: DollarSign, desc: 'ক্লায়েন্ট রেভিনিউ ও আউটরিচ ট্র্যাকার' },
-    { label: 'রিপোর্ট', href: '/reports', icon: BarChart3, desc: 'সাপ্তাহিক ও মাসিক অগ্রগতির গ্রাফ' },
     {
       label: 'urge সহায়তা',
       href: '/urge-help',
@@ -50,22 +59,57 @@ export const BottomNav: React.FC = () => {
     { label: 'সেটিংস', href: '/settings', icon: Settings, desc: 'প্রোফাইল, টার্গেট ও ডেটা এক্সপোর্ট' },
   ];
 
-  const isMoreActive = moreItems.some((item) => item.href === pathname);
+  const handleFocusClick = (e: React.MouseEvent) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      const el = document.getElementById('focus-control');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      router.push('/#focus-control');
+    }
+  };
 
   return (
     <>
-      {/* Mobile Bottom Navigation Bar */}
+      {/* Mobile Bottom Navigation Bar - Strict 5 Tabs: আজ | কাজ | Focus | ক্লায়েন্ট | রিপোর্ট */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#181715]/95 backdrop-blur-md border-t border-stone-200 dark:border-stone-800 pb-[env(safe-area-inset-bottom)] shadow-lg shadow-stone-900/5">
-        <div className="grid grid-cols-5 h-16 max-w-lg mx-auto">
+        <div className="grid grid-cols-5 h-16 max-w-lg mx-auto items-center">
           {mainTabs.map((tab) => {
-            const isActive = pathname === tab.href;
+            const isActive = tab.isFocus
+              ? Boolean(activeSession)
+              : pathname === tab.href;
             const Icon = tab.icon;
+
+            if (tab.isFocus) {
+              return (
+                <button
+                  key={tab.label}
+                  onClick={handleFocusClick}
+                  className="relative flex flex-col items-center justify-center gap-0.5 py-1 transition-transform active:scale-95"
+                >
+                  <div
+                    className={`w-10 h-10 -mt-3 rounded-2xl flex items-center justify-center shadow-md transition-all ${
+                      activeSession
+                        ? 'bg-emerald-600 text-white shadow-emerald-600/30 ring-2 ring-emerald-400 animate-pulse'
+                        : 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-emerald-700/20 hover:scale-105'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 leading-tight">
+                    {activeSession ? 'চলছে' : 'Focus'}
+                  </span>
+                </button>
+              );
+            }
 
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`relative flex flex-col items-center justify-center gap-1 transition-colors ${
+                className={`relative flex flex-col items-center justify-center gap-1 transition-colors min-h-[44px] ${
                   isActive
                     ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
                     : 'text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
@@ -86,19 +130,6 @@ export const BottomNav: React.FC = () => {
               </Link>
             );
           })}
-
-          {/* More button */}
-          <button
-            onClick={() => setShowMoreMenu(true)}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-              isMoreActive
-                ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
-                : 'text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
-            }`}
-          >
-            <MoreHorizontal className="w-5 h-5" />
-            <span className="text-[11px] leading-none tracking-tight">মেনু</span>
-          </button>
         </div>
       </nav>
 

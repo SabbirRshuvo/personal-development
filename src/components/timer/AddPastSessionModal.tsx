@@ -32,7 +32,7 @@ export const AddPastSessionModal: React.FC<AddPastSessionModalProps> = ({
 }) => {
   const { clients, tasks, addPastSession, updateSession, deleteSession, language, currentDate } = useData();
 
-  const [date, setDate] = useState(currentDate || new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(currentDate || '');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:30');
   const [category, setCategory] = useState<TimeSessionCategory>('Client Work');

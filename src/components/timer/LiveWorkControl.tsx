@@ -170,7 +170,7 @@ export const LiveWorkControl: React.FC<LiveWorkControlProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-[#1a1917] rounded-3xl border border-stone-200/90 dark:border-stone-800 p-5 sm:p-6 shadow-sm relative overflow-hidden transition-all">
+    <div id="focus-control" className="bg-white dark:bg-[#1a1917] rounded-3xl border border-stone-200/90 dark:border-stone-800 p-5 sm:p-6 shadow-sm relative overflow-hidden transition-all">
       {/* 1. Header bar with Live Status Indicator */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-4 border-b border-stone-100 dark:border-stone-800/80">
         <div className="flex items-center gap-2.5">

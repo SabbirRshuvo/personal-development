@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   BarChart3,
   Clock,
@@ -11,12 +12,16 @@ import {
   Coffee,
   Briefcase,
   Zap,
+  Plus,
+  Play,
+  ShieldAlert,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import {
   toBengaliNumber,
   formatBDT,
   formatHours,
+  getTodayDateString,
 } from '@/lib/utils/bangla';
 import {
   ResponsiveContainer,
@@ -34,13 +39,19 @@ import {
   Legend,
 } from 'recharts';
 
+const DAY_NAMES_BN = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি'];
+const DAY_NAMES_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export default function ReportsPage() {
   const {
     tasks,
     dailyLog,
+    allDailyLogs,
     prayerLog,
     revenue,
     huntingLogs,
+    urgeLogs,
+    relapseLogs,
     clients,
     timeSessions,
     todayTrackedStats,
@@ -49,41 +60,103 @@ export default function ReportsPage() {
 
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'all'>('month');
 
-  // Work Calculations
-  const focusedHours = Number((dailyLog.focused_work_hours * (dateRange === 'today' ? 1 : dateRange === 'week' ? 5.2 : 22)).toFixed(1));
-  const englishHours = Number((dailyLog.english_hours * (dateRange === 'today' ? 1 : dateRange === 'week' ? 4.5 : 18)).toFixed(1));
-  const clientHours = Number((dailyLog.client_work_hours * (dateRange === 'today' ? 1 : dateRange === 'week' ? 5.0 : 20)).toFixed(1));
+  const todayStr = getTodayDateString();
 
-  // Task metrics
+  // Determine cutoff date for selected filter
+  const startDate = React.useMemo(() => {
+    const d = new Date(todayStr);
+    if (dateRange === 'today') return todayStr;
+    if (dateRange === 'week') {
+      d.setDate(d.getDate() - 7);
+      return d.toISOString().split('T')[0];
+    }
+    if (dateRange === 'month') {
+      d.setDate(d.getDate() - 30);
+      return d.toISOString().split('T')[0];
+    }
+    return '1970-01-01'; // all
+  }, [dateRange, todayStr]);
+
+  // Filter time sessions within selected date range
+  const filteredSessions = timeSessions.filter((s) => {
+    const sDate = s.started_at ? s.started_at.split('T')[0] : s.created_at ? s.created_at.split('T')[0] : todayStr;
+    return sDate >= startDate && sDate <= todayStr;
+  });
+
+  const focusSessions = filteredSessions.filter(
+    (s) => s.category !== 'Break' && s.category !== 'break' && s.category !== 'prayer'
+  );
+  const breakSessions = filteredSessions.filter(
+    (s) => s.category === 'Break' || s.category === 'break' || s.category === 'prayer'
+  );
+
+  const totalFocusSecs = focusSessions.reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
+  const totalBreakSecs = breakSessions.reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
+
+  // If sessions exist, use tracked time. If manual dailyLog has values, incorporate them.
+  const sessionFocusHours = Number((totalFocusSecs / 3600).toFixed(1));
+  const focusedHours = Math.max(
+    sessionFocusHours,
+    dateRange === 'today' ? dailyLog.focused_work_hours : sessionFocusHours
+  );
+
+  const englishSecs = filteredSessions
+    .filter((s) => s.category === 'English Practice' || s.category === 'english_practice')
+    .reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
+  const englishHours = Number((englishSecs / 3600).toFixed(1));
+
+  const clientSecs = filteredSessions
+    .filter((s) => s.category === 'Client Work' || s.category === 'client_work')
+    .reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
+  const clientHours = Number((clientSecs / 3600).toFixed(1));
+
+  const totalBreakHours = Number((totalBreakSecs / 3600).toFixed(1));
+
+  // Task metrics - strictly real
   const completedTasksCount = tasks.filter((t) => t.status === 'সম্পন্ন').length;
   const carriedForwardCount = tasks.filter((t) => t.is_carried_forward).length;
 
-  // Prayer consistency
+  // Prayer consistency from real prayer log
   const prayers = [prayerLog.fajr, prayerLog.dhuhr, prayerLog.asr, prayerLog.maghrib, prayerLog.isha];
   const prayersOffered = prayers.filter((p) => p.status === 'পড়েছি').length;
   const prayersJamat = prayers.filter((p) => p.status === 'পড়েছি' && p.type === 'জামাতে').length;
   const prayerPercentage = Math.round((prayersOffered / 5) * 100);
   const jamatPercentage = prayersOffered > 0 ? Math.round((prayersJamat / prayersOffered) * 100) : 0;
 
-  // Relapse & Urge stats
-  const relapseFreeDays = 26; // Exemplary motivational streak
+  // Relapse & Urge stats - strictly calculated from real logs
+  const relapseFreeDays = React.useMemo(() => {
+    const todayTimestamp = new Date(todayStr).getTime();
+    if (relapseLogs.length > 0) {
+      const sorted = [...relapseLogs].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      const lastRelapseDate = new Date(sorted[0].date).getTime();
+      const diffDays = Math.floor((todayTimestamp - lastRelapseDate) / (1000 * 60 * 60 * 24));
+      return Math.max(0, diffDays);
+    }
+    // If no relapse recorded, count days since user activity or default to 0 if totally empty
+    if (timeSessions.length > 0 || tasks.length > 0) {
+      const dates = [
+        ...timeSessions.map((s) => (s.started_at ? s.started_at.split('T')[0] : '')),
+        ...tasks.map((t) => t.created_at ? t.created_at.split('T')[0] : ''),
+      ].filter(Boolean);
+      if (dates.length > 0) {
+        dates.sort();
+        const earliest = new Date(dates[0]).getTime();
+        const diffDays = Math.floor((todayTimestamp - earliest) / (1000 * 60 * 60 * 24));
+        return Math.max(1, diffDays + 1);
+      }
+    }
+    return 0;
+  }, [relapseLogs, timeSessions, tasks, todayStr]);
 
-  // Revenue metrics
+  // Revenue metrics - strictly real
   const totalRev = revenue.reduce((sum, r) => sum + r.amount, 0);
 
-  // Outreach metrics
+  // Outreach metrics - strictly real
   const totalSent = huntingLogs.reduce((sum, h) => sum + h.messages_sent, 0);
   const totalResponses = huntingLogs.reduce((sum, h) => sum + h.responses_count, 0);
   const responseRate = totalSent > 0 ? Math.round((totalResponses / totalSent) * 100) : 0;
-
-  // ================= Live Time Tracking Analytics =================
-  const focusSessions = timeSessions.filter((s) => s.category !== 'Break' && s.category !== 'break');
-  const breakSessions = timeSessions.filter((s) => s.category === 'Break' || s.category === 'break');
-
-  const totalFocusSecs = focusSessions.reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
-  const totalBreakSecs = breakSessions.reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
-  const totalFocusHours = Number((totalFocusSecs / 3600).toFixed(1));
-  const totalBreakHours = Number((totalBreakSecs / 3600).toFixed(1));
 
   // Average session length
   const completedFocusSessions = focusSessions.filter((s) => (s.duration_seconds || 0) > 0);
@@ -92,11 +165,11 @@ export default function ReportsPage() {
     : 0;
 
   // Total Pomodoros
-  const totalPomodoros = timeSessions.filter((s) => s.is_pomodoro).length;
+  const totalPomodoros = filteredSessions.filter((s) => s.is_pomodoro).length;
 
   // Time per Category for Pie Chart
   const categoryMap = new Map<string, number>();
-  timeSessions.forEach((s) => {
+  filteredSessions.forEach((s) => {
     const mins = Math.round((s.duration_seconds || 0) / 60);
     if (mins > 0) {
       categoryMap.set(s.category, (categoryMap.get(s.category) || 0) + mins);
@@ -118,7 +191,7 @@ export default function ReportsPage() {
 
   // Time per Client
   const clientTimeMap = new Map<string, number>();
-  timeSessions.forEach((s) => {
+  filteredSessions.forEach((s) => {
     const cName = s.client_name || s.linked_client_name;
     if (cName) {
       const mins = Math.round((s.duration_seconds || 0) / 60);
@@ -134,7 +207,7 @@ export default function ReportsPage() {
 
   // Time per Task (Top 5)
   const taskTimeMap = new Map<string, number>();
-  timeSessions.forEach((s) => {
+  filteredSessions.forEach((s) => {
     const tTitle = s.task_title || s.linked_task_title;
     if (tTitle) {
       const mins = Math.round((s.duration_seconds || 0) / 60);
@@ -149,39 +222,91 @@ export default function ReportsPage() {
 
   // Focus vs Break distribution
   const focusVsBreakData = [
-    { name: language === 'bn' ? 'ফোকাস কাজ' : 'Focus Work', value: Math.max(1, totalFocusHours), color: '#3b82f6' },
-    { name: language === 'bn' ? 'বিরতি' : 'Break Time', value: Math.max(0.2, totalBreakHours), color: '#f59e0b' },
+    { name: language === 'bn' ? 'ফোকাস কাজ' : 'Focus Work', value: Math.max(0, focusedHours), color: '#3b82f6' },
+    { name: language === 'bn' ? 'বিরতি' : 'Break Time', value: Math.max(0, totalBreakHours), color: '#f59e0b' },
   ];
 
-  // Weekly Work Trend Mock Data
-  const workTrendData = [
-    { day: 'শনি', focus: 5.5, english: 1.0, sleep: 7.0 },
-    { day: 'রবি', focus: 6.0, english: 1.2, sleep: 7.2 },
-    { day: 'সোম', focus: 4.5, english: 0.5, sleep: 6.8 },
-    { day: 'মঙ্গল', focus: 7.0, english: 1.5, sleep: 7.5 },
-    { day: 'বুধ', focus: 6.5, english: 1.0, sleep: 7.0 },
-    { day: 'বৃহঃ', focus: 5.0, english: 1.0, sleep: 7.1 },
-    { day: 'শুক্র', focus: 4.0, english: 0.75, sleep: 8.0 },
-  ];
+  // Dynamically calculate past 7 days trend strictly from real data
+  const last7Days = React.useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(todayStr);
+      d.setDate(d.getDate() - (6 - i));
+      const isoDate = d.toISOString().split('T')[0];
+      const dayOfWeek = d.getDay();
+      const dayLabel = language === 'bn' ? DAY_NAMES_BN[dayOfWeek] : DAY_NAMES_EN[dayOfWeek];
 
-  // Daily task completion data
-  const taskCompletionData = [
-    { day: 'শনি', done: 4, remaining: 1 },
-    { day: 'রবি', done: 5, remaining: 2 },
-    { day: 'সোম', done: 3, remaining: 2 },
-    { day: 'মঙ্গল', done: 6, remaining: 1 },
-    { day: 'বুধ', done: 5, remaining: 1 },
-    { day: 'বৃহঃ', done: 4, remaining: 2 },
-    { day: 'শুক্র', done: 3, remaining: 1 },
-  ];
+      // Find sessions on this date
+      const daySessions = timeSessions.filter((s) => {
+        const sDate = s.started_at ? s.started_at.split('T')[0] : '';
+        return sDate === isoDate;
+      });
 
-  // Client Workload Data
+      const dayFocusSecs = daySessions
+        .filter((s) => s.category !== 'Break' && s.category !== 'break' && s.category !== 'prayer')
+        .reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
+
+      const dayEnglishSecs = daySessions
+        .filter((s) => s.category === 'English Practice' || s.category === 'english_practice')
+        .reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
+
+      const dayLog = allDailyLogs ? allDailyLogs[isoDate] : null;
+
+      const focusHoursVal = Number((dayFocusSecs / 3600).toFixed(1)) || (dayLog?.focused_work_hours || 0);
+      const englishHoursVal = Number((dayEnglishSecs / 3600).toFixed(1)) || (dayLog?.english_hours || 0);
+      const sleepHoursVal = dayLog?.sleep_hours || 0;
+
+      return {
+        date: isoDate,
+        day: dayLabel,
+        focus: focusHoursVal,
+        english: englishHoursVal,
+        sleep: sleepHoursVal,
+      };
+    });
+  }, [todayStr, language, timeSessions, allDailyLogs]);
+
+  const workTrendData = last7Days;
+
+  // Real Task Completion Trend for past 7 days
+  const taskCompletionData = last7Days.map((d) => {
+    const dayTasks = tasks.filter((t) => t.due_date === d.date || (t.created_at && t.created_at.startsWith(d.date)));
+    const done = dayTasks.filter((t) => t.status === 'সম্পন্ন').length;
+    const remaining = dayTasks.length - done;
+
+    return {
+      day: d.day,
+      done,
+      remaining: Math.max(0, remaining),
+    };
+  });
+
+  // Client Workload Data strictly from real clients & tasks
   const clientWorkloadData = clients.map((c) => ({
-    name: c.name || c.client_name || 'Client',
-    tasks: tasks.filter((t) => t.client_id === c.id).length || 1,
+    name: c.name || c.project_name || 'Client',
+    tasks: tasks.filter((t) => t.client_id === c.id).length,
+  })).filter((c) => c.tasks > 0);
+
+  // Real Urge triggers aggregation
+  const urgeTriggerMap = new Map<string, number>();
+  urgeLogs.forEach((u) => {
+    if (u.trigger) {
+      urgeTriggerMap.set(u.trigger, (urgeTriggerMap.get(u.trigger) || 0) + 1);
+    }
+  });
+
+  const urgeTriggersData = Array.from(urgeTriggerMap.entries()).map(([trigger, count]) => ({
+    trigger,
+    count,
   }));
 
   const PIE_COLORS = ['#059669', '#3b82f6', '#8b5cf6', '#f59e0b', '#06b6d4', '#ec4899'];
+
+  // Check if app has any data at all
+  const isCompletelyEmpty =
+    tasks.length === 0 &&
+    timeSessions.length === 0 &&
+    revenue.length === 0 &&
+    huntingLogs.length === 0;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -222,6 +347,39 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* Required Empty State Experience */}
+      {isCompletelyEmpty && (
+        <div className="p-8 bg-white dark:bg-[#1a1917] rounded-3xl border border-dashed border-stone-200 dark:border-stone-800 text-center space-y-4 animate-in fade-in">
+          <div className="w-14 h-14 mx-auto rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <BarChart3 className="w-7 h-7" />
+          </div>
+          <div className="space-y-1.5 max-w-md mx-auto">
+            <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100">
+              রিপোর্ট দেখতে কিছুদিনের real activity যোগ হওয়া দরকার।
+            </h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              তোমার ফোকাস সেশন, কাজ, নামাজ ও ক্লায়েন্ট এন্ট্রিগুলো যুক্ত করতে শুরু করো। স্বয়ংক্রিয়ভাবে সমস্ত চার্ট ও অগ্রগতি রিপোর্ট তৈরি হবে।
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Link
+              href="/#focus-control"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95"
+            >
+              <Play className="w-4 h-4 fill-current" />
+              <span>Focus শুরু করুন</span>
+            </Link>
+            <Link
+              href="/tasks"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700 font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>কাজ যোগ করুন</span>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* 1. Monthly Summary Card */}
       <div className="bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white rounded-3xl p-6 sm:p-8 shadow-md relative overflow-hidden">
         <div className="relative z-10 space-y-4">
@@ -241,7 +399,7 @@ export default function ReportsPage() {
             <div className="p-3.5 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15">
               <span className="text-xs text-emerald-100 block">{language === 'bn' ? 'কাজ সম্পন্ন' : 'Tasks Done'}</span>
               <span className="text-xl sm:text-2xl font-black">
-                {language === 'bn' ? `${toBengaliNumber(completedTasksCount * 4)}টি` : `${completedTasksCount * 4}`}
+                {language === 'bn' ? `${toBengaliNumber(completedTasksCount)}টি` : `${completedTasksCount}`}
               </span>
             </div>
 
@@ -271,8 +429,8 @@ export default function ReportsPage() {
             <span>
               <strong>{language === 'bn' ? 'পরবর্তী বড় ফোকাস:' : 'Next Big Focus:'}</strong>{' '}
               {language === 'bn'
-                ? 'ক্লায়েন্ট হান্টিং আউটরিচ দ্বিগুণ করা এবং ৩টি নতুন হাই-টিকেটিং প্রজেক্ট নিশ্চিত করা।'
-                : 'Double client hunting outreach and close 3 high-ticket projects.'}
+                ? 'ক্লায়েন্ট হান্টিং আউটরিচ বৃদ্ধি করা এবং মানসম্মত প্রজেক্ট ডেলিভারি নিশ্চিত করা।'
+                : 'Scale client hunting outreach and deliver high quality projects.'}
             </span>
             <span className="text-amber-300 font-bold shrink-0">
               {language === 'bn' ? `${toBengaliNumber(relapseFreeDays)} দিন relapse-মুক্ত streak! 🔥` : `${relapseFreeDays} days relapse-free streak! 🔥`}
@@ -312,7 +470,7 @@ export default function ReportsPage() {
               <span>{language === 'bn' ? 'মোট ফোকাস কাজ' : 'Total Focus'}</span>
             </div>
             <div className="text-xl font-black text-slate-900 dark:text-slate-100">
-              {language === 'bn' ? `${toBengaliNumber(totalFocusHours)} ঘণ্টা` : `${totalFocusHours}h`}
+              {language === 'bn' ? `${toBengaliNumber(focusedHours)} ঘণ্টা` : `${focusedHours}h`}
             </div>
             <span className="text-[11px] text-slate-500">
               {language === 'bn' ? `${toBengaliNumber(focusSessions.length)}টি সেশনে` : `in ${focusSessions.length} sessions`}
@@ -421,7 +579,7 @@ export default function ReportsPage() {
                 <div>
                   <div className="flex justify-between text-xs font-semibold mb-1">
                     <span className="text-blue-600 dark:text-blue-400">{focusVsBreakData[0].name}</span>
-                    <span>{toBengaliNumber(totalFocusHours)} ঘণ্টা</span>
+                    <span>{toBengaliNumber(focusedHours)} ঘণ্টা</span>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-slate-700 h-3 rounded-full overflow-hidden">
                     <div
@@ -429,9 +587,9 @@ export default function ReportsPage() {
                       style={{
                         width: `${Math.min(
                           100,
-                          totalFocusHours + totalBreakHours > 0
-                            ? (totalFocusHours / (totalFocusHours + totalBreakHours)) * 100
-                            : 85
+                          focusedHours + totalBreakHours > 0
+                            ? (focusedHours / (focusedHours + totalBreakHours)) * 100
+                            : 0
                         )}%`,
                       }}
                     />
@@ -449,9 +607,9 @@ export default function ReportsPage() {
                       style={{
                         width: `${Math.min(
                           100,
-                          totalFocusHours + totalBreakHours > 0
-                            ? (totalBreakHours / (totalFocusHours + totalBreakHours)) * 100
-                            : 15
+                          focusedHours + totalBreakHours > 0
+                            ? (totalBreakHours / (focusedHours + totalBreakHours)) * 100
+                            : 0
                         )}%`,
                       }}
                     />
@@ -671,53 +829,62 @@ export default function ReportsPage() {
             )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            {clientWorkloadData.map((c, i) => (
-              <div key={c.name} className="flex items-center gap-1.5 text-xs">
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
-                />
-                <span className="text-stone-600 dark:text-stone-400">{c.name}</span>
-              </div>
-            ))}
-          </div>
+          {clientWorkloadData.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              {clientWorkloadData.map((c, i) => (
+                <div key={c.name} className="flex items-center gap-1.5 text-xs">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
+                  />
+                  <span className="text-stone-600 dark:text-stone-400">{c.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Urge & Discipline Triggers Analysis */}
         <div className="bg-white dark:bg-[#1a1917] p-5 rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
-          <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">
-            {language === 'bn' ? 'আত্মনিয়ন্ত্রণ ও ট্রিগার বিশ্লেষণ' : 'Self-Discipline & Trigger Analysis'}
+          <h3 className="font-bold text-base text-stone-900 dark:text-stone-100 flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-amber-500" />
+            <span>{language === 'bn' ? 'আত্মনিয়ন্ত্রণ ও ট্রিগার বিশ্লেষণ' : 'Self-Discipline & Trigger Analysis'}</span>
           </h3>
           <p className="text-xs text-stone-500">
-            {language === 'bn' ? 'কোন কোন পরিস্থিতিতে সচেতনতা সবচেয়ে বেশি প্রয়োজন' : 'High awareness contexts'}
+            {language === 'bn' ? 'কোন কোন পরিস্থিতিতে সচেতনতা সবচেয়ে বেশি প্রয়োজন' : 'High awareness contexts from real logs'}
           </p>
 
           <div className="space-y-3">
-            {[
-              { labelBn: 'রাত ১২টার পর একা থাকা', labelEn: 'Alone after midnight', riskBn: 'উচ্চ ঝুঁকি', riskEn: 'High Risk', color: 'text-amber-600', count: 3 },
-              { labelBn: 'মানসিক চাপ / ক্লায়েন্ট ডেডলাইন', labelEn: 'Stress / tight deadlines', riskBn: 'মাঝারি', riskEn: 'Medium', color: 'text-blue-600', count: 2 },
-              { labelBn: 'অলস সময় / স্ক্রলিং', labelEn: 'Aimless scrolling', riskBn: 'মাঝারি', riskEn: 'Medium', color: 'text-blue-600', count: 1 },
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200/60 dark:border-stone-700/60 text-xs"
-              >
-                <div>
-                  <span className="font-bold text-stone-900 dark:text-stone-100 block">
-                    {language === 'bn' ? item.labelBn : item.labelEn}
-                  </span>
-                  <span className={`text-[11px] font-semibold ${item.color}`}>
-                    {language === 'bn' ? item.riskBn : item.riskEn}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-bold text-stone-700 dark:text-stone-300">
-                    {language === 'bn' ? `${toBengaliNumber(item.count)} বার মোকাবিলা হয়েছে` : `Managed ${item.count} times`}
-                  </span>
-                </div>
+            {urgeTriggersData.length === 0 ? (
+              <div className="p-6 text-center border border-dashed border-stone-200 dark:border-stone-800 rounded-2xl">
+                <p className="text-xs text-stone-400">
+                  {language === 'bn'
+                    ? 'এখনো কোনো urge লগ রেকর্ড করা হয়নি। আলহামদুলিল্লাহ!'
+                    : 'No urge logs recorded yet.'}
+                </p>
               </div>
-            ))}
+            ) : (
+              urgeTriggersData.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200/60 dark:border-stone-700/60 text-xs"
+                >
+                  <div>
+                    <span className="font-bold text-stone-900 dark:text-stone-100 block">
+                      {item.trigger}
+                    </span>
+                    <span className="text-[11px] font-semibold text-amber-600">
+                      {language === 'bn' ? 'শনাক্তকৃত ট্রিগার' : 'Identified Trigger'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-stone-700 dark:text-stone-300">
+                      {language === 'bn' ? `${toBengaliNumber(item.count)} বার মোকাবিলা হয়েছে` : `Managed ${item.count} times`}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

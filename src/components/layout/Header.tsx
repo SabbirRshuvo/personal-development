@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShieldAlert, Sun, Moon, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, Sun, Moon, Sparkles, CheckCircle2, Menu, X, Activity, DollarSign, Settings } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useData } from '@/context/DataContext';
 import { formatBanglaDate, getTodayDateString } from '@/lib/utils/bangla';
@@ -13,6 +13,7 @@ export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { isOnlineDemo, isSaving } = useData();
   const [formattedToday, setFormattedToday] = React.useState('১৪ নভেম্বর ২০২৬, শনিবার');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   React.useEffect(() => {
     setFormattedToday(formatBanglaDate(getTodayDateString(), true));
@@ -87,8 +88,62 @@ export const Header: React.FC = () => {
           >
             {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
           </button>
+
+          {/* Mobile menu button for tracker/revenue/settings */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-xl text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-700/80 transition-colors"
+            aria-label="Open menu"
+          >
+            {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Drawer */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-[#1a1917] p-4 space-y-2 animate-in slide-in-from-top duration-200 shadow-xl">
+          <div className="text-xs font-semibold text-stone-400 uppercase tracking-wider px-2 pb-1">
+            অন্যান্য ফিচার
+          </div>
+          <Link
+            href="/tracker"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`flex items-center gap-3 p-2.5 rounded-xl text-sm font-medium transition-colors ${
+              pathname === '/tracker'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold'
+                : 'text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+            }`}
+          >
+            <Activity className="w-4 h-4 text-emerald-600" />
+            <span>ট্র্যাকার ও ইবাদত</span>
+          </Link>
+          <Link
+            href="/revenue"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`flex items-center gap-3 p-2.5 rounded-xl text-sm font-medium transition-colors ${
+              pathname === '/revenue'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold'
+                : 'text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+            }`}
+          >
+            <DollarSign className="w-4 h-4 text-emerald-600" />
+            <span>আয় ও হান্টিং</span>
+          </Link>
+          <Link
+            href="/settings"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`flex items-center gap-3 p-2.5 rounded-xl text-sm font-medium transition-colors ${
+              pathname === '/settings'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold'
+                : 'text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+            }`}
+          >
+            <Settings className="w-4 h-4 text-emerald-600" />
+            <span>সেটিংস ও লক্ষ্যমাত্রা</span>
+          </Link>
+        </div>
+      )}
     </header>
   );
 };

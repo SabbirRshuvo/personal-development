@@ -121,13 +121,22 @@ export default function ClientsPage() {
       {/* Clients List */}
       <div className="space-y-4">
         {clients.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-[#1a1917] rounded-3xl border border-dashed border-stone-200 dark:border-stone-800">
-            <p className="text-stone-500 text-sm mb-3">এখনো কোনো ক্লায়েন্ট যোগ করা হয়নি</p>
+          <div className="text-center py-16 bg-white dark:bg-[#1a1917] rounded-3xl border border-dashed border-stone-200 dark:border-stone-800 space-y-3">
+            <Users className="w-10 h-10 text-stone-300 dark:text-stone-600 mx-auto" />
+            <div className="space-y-1">
+              <p className="text-stone-800 dark:text-stone-200 font-bold text-base">
+                এখনো কোনো client যোগ করা হয়নি।
+              </p>
+              <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                তোমার ক্লায়েন্ট প্রজেক্ট, চুক্তি ও পেমেন্টের হিসাব রাখতে ক্লায়েন্ট তৈরি করো।
+              </p>
+            </div>
             <button
               onClick={() => setIsAddClientOpen(true)}
-              className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 active:scale-95 transition-all shadow-sm"
             >
-              + ক্লায়েন্ট যোগ করুন
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>প্রথম client যোগ করুন</span>
             </button>
           </div>
         ) : (

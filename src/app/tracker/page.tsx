@@ -462,6 +462,13 @@ export default function TrackerPage() {
             </p>
           </div>
 
+          {prayers.every((p) => prayerLog[p.key].status === 'পড়িনি') && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/50 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 font-medium">
+              <MoonStar className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>আজকের নামাজের update এখনো দেওয়া হয়নি। নিচের বাটন চেপে দ্রুত আপডেট করুন।</span>
+            </div>
+          )}
+
           <div className="space-y-3">
             {prayers.map((prayer) => {
               const current = prayerLog[prayer.key];
