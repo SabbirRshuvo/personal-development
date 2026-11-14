@@ -8,8 +8,6 @@ import {
   Pause,
   RotateCcw,
   CheckCircle2,
-  Heart,
-  Wind,
   PhoneOff,
   EyeOff,
   Droplets,
@@ -17,7 +15,6 @@ import {
   CheckSquare,
   MessageSquare,
   Sparkles,
-  ArrowRight,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { toBanglaNumber, getTodayDateString } from '@/lib/utils/bangla';
@@ -210,6 +207,13 @@ export default function UrgeHelpPage() {
             <span className="font-bold text-emerald-600 dark:text-emerald-400">শ্বাস-প্রশ্বাস: </span>
             ৪ সেকেন্ড শ্বাস নাও, ৪ সেকেন্ড ধরে রাখো, ৬ সেকেন্ডে ছাড়ো
           </div>
+
+          {hasCompleted && (
+            <div className="mt-4 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 text-emerald-900 dark:text-emerald-200 text-sm font-bold flex items-center justify-center gap-2 animate-in fade-in">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span>অসাধারণ! তুমি সফলভাবে পুরো ১০ মিনিট পার করেছো। তাড়না এখন অনেকটাই স্তিমিত।</span>
+            </div>
+          )}
         </div>
 
         {/* Timer Control Buttons */}

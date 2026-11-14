@@ -4,17 +4,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Settings,
   User,
-  Clock,
-  DollarSign,
   Download,
   Trash2,
   RefreshCw,
   Smartphone,
   Moon,
   Sun,
-  ShieldCheck,
   CheckCircle2,
-  Info,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -32,7 +28,7 @@ export default function SettingsPage() {
     isOnlineDemo,
   } = useData();
 
-  const { theme, toggleTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   // Local form state
   const [profileName, setProfileName] = useState(settings.profile_name);
@@ -40,7 +36,7 @@ export default function SettingsPage() {
   const [englishTarget, setEnglishTarget] = useState(settings.daily_english_target_hours);
   const [huntTarget, setHuntTarget] = useState(settings.daily_hunting_target_minutes);
   const [currencySymbol, setCurrencySymbol] = useState(settings.currency_symbol || '৳');
-  const [prayerEnabled, setPrayerEnabled] = useState(settings.prayer_tracking_enabled);
+  const [prayerEnabled] = useState(settings.prayer_tracking_enabled);
   const [savedNotice, setSavedNotice] = useState(false);
 
   // PWA install prompt handler
@@ -268,7 +264,7 @@ export default function SettingsPage() {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-white text-white dark:text-stone-900 font-bold text-xs sm:text-sm shadow-sm transition-all"
           >
             <Smartphone className="w-4 h-4" />
-            <span>হোম স্ক্রিনে ইনস্টল করুন</span>
+            <span>{isInstallable ? 'অ্যাপ ইনস্টল করুন (সরাসরি)' : 'হোম স্ক্রিনে ইনস্টল করুন'}</span>
           </button>
 
           <span className="text-xs text-stone-400">

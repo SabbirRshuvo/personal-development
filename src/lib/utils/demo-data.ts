@@ -9,7 +9,6 @@ import {
   UrgeLog,
   RelapseLog,
 } from '@/lib/types/database';
-import { getTodayDateString } from './bangla';
 
 const today = '2026-11-14';
 

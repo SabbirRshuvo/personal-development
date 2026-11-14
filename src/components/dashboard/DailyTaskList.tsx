@@ -5,13 +5,8 @@ import {
   CheckCircle2,
   Circle,
   Clock,
-  ArrowRight,
   RotateCcw,
   Plus,
-  Flame,
-  Check,
-  Calendar,
-  AlertCircle,
 } from 'lucide-react';
 import { Task, Priority } from '@/lib/types/database';
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge';

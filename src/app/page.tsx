@@ -4,11 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Plus,
-  Clock,
   ShieldAlert,
   Sparkles,
-  ChevronRight,
-  TrendingUp,
   Sliders,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';

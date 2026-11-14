@@ -26,7 +26,7 @@ import {
   INITIAL_RELAPSE_LOGS,
 } from '@/lib/utils/demo-data';
 import { getTodayDateString } from '@/lib/utils/bangla';
-import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 interface DataContextType {
   tasks: Task[];

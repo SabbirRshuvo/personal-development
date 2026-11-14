@@ -47,7 +47,10 @@ export default function RootLayout({
         <link rel="icon" href="/icons/icon-192.svg" type="image/svg+xml" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body className="min-h-screen bg-[#faf9f6] dark:bg-[#121110] text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors duration-200">
+      <body
+        suppressHydrationWarning
+        className="min-h-screen bg-[#faf9f6] dark:bg-[#121110] text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors duration-200"
+      >
         <ThemeProvider>
           <DataProvider>
             <ServiceWorkerRegister />

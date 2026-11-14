@@ -1,4 +1,4 @@
-import { Task, RevenueEntry, DailyLog } from '@/lib/types/database';
+import { Task, RevenueEntry } from '@/lib/types/database';
 
 export function downloadCSV(filename: string, csvContent: string) {
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });

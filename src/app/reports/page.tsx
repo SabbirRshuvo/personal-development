@@ -3,23 +3,15 @@
 import React, { useState } from 'react';
 import {
   BarChart3,
-  Calendar,
   Clock,
-  MoonStar,
   CheckSquare,
-  Shield,
-  TrendingUp,
-  Sparkles,
   Award,
-  Filter,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import {
   toBanglaNumber,
   formatBDT,
   formatHours,
-  formatMinutes,
-  getTodayDateString,
 } from '@/lib/utils/bangla';
 import {
   ResponsiveContainer,
@@ -43,28 +35,18 @@ export default function ReportsPage() {
     prayerLog,
     revenue,
     huntingLogs,
-    urgeLogs,
-    relapseLogs,
     clients,
-    settings,
   } = useData();
 
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'all'>('month');
-
-  // Multiplier or simulated range data for realistic visualization
-  const multiplier = dateRange === 'today' ? 1 : dateRange === 'week' ? 7 : 30;
 
   // Work Calculations
   const focusedHours = Number((dailyLog.focused_work_hours * (dateRange === 'today' ? 1 : dateRange === 'week' ? 5.2 : 22)).toFixed(1));
   const englishHours = Number((dailyLog.english_hours * (dateRange === 'today' ? 1 : dateRange === 'week' ? 4.5 : 18)).toFixed(1));
   const clientHours = Number((dailyLog.client_work_hours * (dateRange === 'today' ? 1 : dateRange === 'week' ? 5.0 : 20)).toFixed(1));
-  const huntingMinutes = dailyLog.hunting_minutes * (dateRange === 'today' ? 1 : dateRange === 'week' ? 6 : 24);
-  const wastedMinutes = dailyLog.wasted_minutes * (dateRange === 'today' ? 1 : dateRange === 'week' ? 6 : 24);
-  const sleepAverage = dailyLog.sleep_hours;
 
   // Task metrics
   const completedTasksCount = tasks.filter((t) => t.status === 'সম্পন্ন').length;
-  const pendingTasksCount = tasks.filter((t) => t.status !== 'সম্পন্ন').length;
   const carriedForwardCount = tasks.filter((t) => t.is_carried_forward).length;
 
   // Prayer consistency
@@ -76,7 +58,6 @@ export default function ReportsPage() {
 
   // Relapse & Urge stats
   const relapseFreeDays = 26; // Exemplary motivational streak
-  const urgeCount = urgeLogs.length;
 
   // Revenue metrics
   const totalRev = revenue.reduce((sum, r) => sum + r.amount, 0);

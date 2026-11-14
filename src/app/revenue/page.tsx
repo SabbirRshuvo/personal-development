@@ -3,16 +3,12 @@
 import React, { useState } from 'react';
 import {
   DollarSign,
-  TrendingUp,
   UserSearch,
   Plus,
   Send,
   PhoneCall,
   UserCheck,
-  CheckCircle2,
   Trash2,
-  Calendar,
-  Layers,
   BarChart2,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';

@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Priority, TaskStatus, Client, Task } from '@/lib/types/database';
-import { Trash2, RotateCcw, Calendar, CheckSquare, Clock } from 'lucide-react';
-import { formatBanglaDate, toBanglaNumber, getTodayDateString } from '@/lib/utils/bangla';
+import { Trash2, RotateCcw } from 'lucide-react';
+import { toBanglaNumber } from '@/lib/utils/bangla';
 
 interface TaskModalProps {
   isOpen: boolean;

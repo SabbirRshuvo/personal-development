@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import {
   CheckSquare,
   Plus,
-  Filter,
   Search,
   RotateCcw,
   Clock,
@@ -17,7 +16,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
-import { Priority, TaskStatus, Task } from '@/lib/types/database';
+import { Task } from '@/lib/types/database';
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge';
 import { TaskModal } from '@/components/tasks/TaskModal';
 import { QuickAddTaskModal } from '@/components/dashboard/QuickActionModals';

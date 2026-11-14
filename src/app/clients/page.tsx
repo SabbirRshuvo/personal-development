@@ -6,14 +6,12 @@ import {
   Plus,
   Briefcase,
   AlertCircle,
-  Calendar,
   DollarSign,
-  CheckCircle2,
   ChevronRight,
   TrendingUp,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
-import { Client, Task } from '@/lib/types/database';
+import { Client } from '@/lib/types/database';
 import { ClientStatusBadge } from '@/components/ui/Badge';
 import { ClientModal } from '@/components/clients/ClientModal';
 import { ClientDetailModal } from '@/components/clients/ClientDetailModal';

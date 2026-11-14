@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { Priority, TaskStatus, Client, DailyLog, Task } from '@/lib/types/database';
+import { Priority, Client, DailyLog, Task } from '@/lib/types/database';
 import { toBanglaNumber, getTodayDateString } from '@/lib/utils/bangla';
 
 interface QuickAddTaskModalProps {
@@ -119,22 +119,36 @@ export const QuickAddTaskModal: React.FC<QuickAddTaskModalProps> = ({
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
-            সংশ্লিষ্ট ক্লায়েন্ট / প্রজেক্ট (ঐচ্ছিক)
-          </label>
-          <select
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            <option value="">কোনো ক্লায়েন্ট যুক্ত নেই (ব্যক্তিগত কাজ)</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.project_name})
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+              সংশ্লিষ্ট ক্লায়েন্ট / প্রজেক্ট
+            </label>
+            <select
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">ব্যক্তিগত কাজ</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+              নির্ধারিত তারিখ
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
         </div>
 
         <div>

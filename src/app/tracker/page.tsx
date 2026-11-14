@@ -10,17 +10,11 @@ import {
   Smile,
   Meh,
   Frown,
-  Zap,
-  Sparkles,
   CheckCircle2,
-  AlertCircle,
-  HelpCircle,
-  Check,
   Users2,
-  Save,
 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
-import { Mood, PrayerStatus, PrayerType, TriggerType } from '@/lib/types/database';
+import { Mood, TriggerType } from '@/lib/types/database';
 import { toBanglaNumber, formatBanglaDate, getTodayDateString } from '@/lib/utils/bangla';
 
 export default function TrackerPage() {
@@ -738,6 +732,19 @@ export default function TrackerPage() {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                    ব্যক্তিগত নোট (ঐচ্ছিক)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="অনুভূতি বা ভবিষ্যৎ সতর্কতা..."
+                    value={urgeNote}
+                    onChange={(e) => setUrgeNote(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-xs"
+                  />
+                </div>
+
                 <button
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs"
@@ -835,6 +842,19 @@ export default function TrackerPage() {
                       placeholder="পানি খেয়েছি, ওযু করেছি এবং টেবিলে ফিরে এসেছি..."
                       value={relapseRecovery}
                       onChange={(e) => setRelapseRecovery(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                      ব্যক্তিগত নোট (ঐচ্ছিক)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="ভবিষ্যতের জন্য সতর্কতা বা শিক্ষা..."
+                      value={relapseNote}
+                      onChange={(e) => setRelapseNote(e.target.value)}
                       className="w-full px-3.5 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-xs"
                     />
                   </div>

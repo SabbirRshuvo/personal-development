@@ -7,16 +7,11 @@ import { ClientStatusBadge, PriorityBadge, StatusBadge } from '@/components/ui/B
 import {
   formatBDT,
   toBanglaNumber,
-  formatBanglaDate,
   getRelativeBanglaDate,
 } from '@/lib/utils/bangla';
 import {
   CheckCircle2,
   Circle,
-  Clock,
-  Calendar,
-  DollarSign,
-  Briefcase,
   AlertCircle,
   Plus,
   Edit3,
