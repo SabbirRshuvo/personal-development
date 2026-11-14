@@ -35,6 +35,8 @@ export function toBanglaNumber(value: number | string | undefined | null): strin
   return str.replace(/\d/g, (digit) => BANGLA_NUMBERS[parseInt(digit, 10)] || digit);
 }
 
+export const toBengaliNumber = toBanglaNumber;
+
 export function formatBDT(amount: number, symbol = '৳'): string {
   const formattedWithCommas = new Intl.NumberFormat('en-IN').format(Math.round(amount));
   return `${symbol}${toBanglaNumber(formattedWithCommas)}`;

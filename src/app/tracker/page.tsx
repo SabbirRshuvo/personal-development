@@ -27,6 +27,8 @@ export default function TrackerPage() {
     addUrgeLog,
     addRelapseLog,
     isSaving,
+    todayTrackedStats,
+    language,
   } = useData();
 
   // Local state for auto-save and immediate responsiveness
@@ -184,13 +186,61 @@ export default function TrackerPage() {
       {/* ===================== TAB 1: WORK TIME ===================== */}
       {activeTab === 'work' && (
         <div className="bg-white dark:bg-[#1a1917] rounded-3xl border border-stone-200/80 dark:border-stone-800 p-5 sm:p-6 space-y-6 shadow-xs animate-in fade-in duration-150">
-          <div>
-            <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
-              আজকের সময় বণ্টন ট্র্যাকার
-            </h2>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
-              স্লাইডার বা ইনপুট পরিবর্তন করলেই স্বয়ংক্রিয়ভাবে আপডেট হয়ে যাবে
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
+                {language === 'bn' ? 'আজকের সময় বণ্টন ট্র্যাকার' : "Today's Time Distribution"}
+              </h2>
+              <p className="text-xs text-stone-500 dark:text-stone-400">
+                {language === 'bn'
+                  ? 'লাইভ টাইমার ও সেশন থেকে সময় স্বয়ংক্রিয়ভাবে জমা হয়; প্রয়োজনে ম্যানুয়ালি পরিবর্তন করতে পারেন'
+                  : 'Time is automatically calculated from live sessions; adjust manually if needed'}
+              </p>
+            </div>
+          </div>
+
+          {/* Live Session Auto-Stats Banner */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-50/80 to-blue-50/80 dark:from-indigo-950/30 dark:to-blue-950/30 border border-indigo-100 dark:border-indigo-900/40">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{language === 'bn' ? 'লাইভ সেশন থেকে সংগৃহীত আজকের সময়' : 'Tracked from Live Sessions Today'}</span>
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="bg-white/80 dark:bg-stone-800/60 p-2.5 rounded-xl border border-indigo-100/60 dark:border-indigo-900/30">
+                <span className="text-[11px] text-stone-500 block">{language === 'bn' ? 'ফোকাস কাজ' : 'Focused'}</span>
+                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                  {language === 'bn'
+                    ? `${toBanglaNumber(Math.floor(todayTrackedStats.totalFocusMinutes / 60))}ঘ ${toBanglaNumber(todayTrackedStats.totalFocusMinutes % 60)}মি`
+                    : `${Math.floor(todayTrackedStats.totalFocusMinutes / 60)}h ${todayTrackedStats.totalFocusMinutes % 60}m`}
+                </span>
+              </div>
+              <div className="bg-white/80 dark:bg-stone-800/60 p-2.5 rounded-xl border border-indigo-100/60 dark:border-indigo-900/30">
+                <span className="text-[11px] text-stone-500 block">{language === 'bn' ? 'বিরতি সময়' : 'Break'}</span>
+                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                  {language === 'bn'
+                    ? `${toBanglaNumber(todayTrackedStats.breakMinutes)} মিনিট`
+                    : `${todayTrackedStats.breakMinutes}m`}
+                </span>
+              </div>
+              <div className="bg-white/80 dark:bg-stone-800/60 p-2.5 rounded-xl border border-indigo-100/60 dark:border-indigo-900/30">
+                <span className="text-[11px] text-stone-500 block">{language === 'bn' ? 'ইংরেজি প্র্যাকটিস' : 'English'}</span>
+                <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                  {language === 'bn'
+                    ? `${toBanglaNumber(todayTrackedStats.englishMinutes)} মিনিট`
+                    : `${todayTrackedStats.englishMinutes}m`}
+                </span>
+              </div>
+              <div className="bg-white/80 dark:bg-stone-800/60 p-2.5 rounded-xl border border-indigo-100/60 dark:border-indigo-900/30">
+                <span className="text-[11px] text-stone-500 block">{language === 'bn' ? 'ক্লায়েন্ট হান্টিং' : 'Hunting'}</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                  {language === 'bn'
+                    ? `${toBanglaNumber(todayTrackedStats.huntingMinutes)} মিনিট`
+                    : `${todayTrackedStats.huntingMinutes}m`}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-5">

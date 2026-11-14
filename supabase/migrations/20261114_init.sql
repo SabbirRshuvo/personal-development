@@ -218,7 +218,7 @@ create index idx_hunting_logs_user_date on public.hunting_logs(user_id, date);
 create table if not exists public.app_settings (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references auth.users(id) on delete cascade unique,
-  profile_name text not null default 'সাব্বির আহমেদ',
+  profile_name text not null default 'Sabbir Rahman Shuvo',
   daily_work_target_hours numeric not null default 6,
   daily_english_target_hours numeric not null default 1,
   daily_hunting_target_minutes numeric not null default 45,
@@ -232,6 +232,36 @@ create table if not exists public.app_settings (
 alter table public.app_settings enable row level security;
 create policy "Users manage own settings" on public.app_settings for all using (auth.uid() = user_id);
 
+-- 12. TIME SESSIONS (LIVE FOCUS TIMER, TIME BLOCKS & WORK TIMELINE)
+create table if not exists public.time_sessions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  client_id uuid references public.clients(id) on delete set null,
+  task_id uuid references public.tasks(id) on delete set null,
+  category text not null default 'deep_focus',
+  break_type text,
+  title text default '',
+  note text default '',
+  started_at timestamptz not null default now(),
+  ended_at timestamptz,
+  duration_seconds integer not null default 0,
+  status text not null default 'active', -- 'active', 'paused', 'completed', 'cancelled'
+  is_pomodoro boolean not null default false,
+  pomodoro_focus_minutes integer,
+  pomodoro_break_minutes integer,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.time_sessions enable row level security;
+create policy "Users manage own time sessions" on public.time_sessions for all using (auth.uid() = user_id);
+create index idx_time_sessions_user on public.time_sessions(user_id);
+create index idx_time_sessions_started on public.time_sessions(started_at);
+create index idx_time_sessions_client on public.time_sessions(client_id);
+create index idx_time_sessions_task on public.time_sessions(task_id);
+create index idx_time_sessions_category on public.time_sessions(category);
+create index idx_time_sessions_status on public.time_sessions(status);
+
 -- Updated_at triggers
 create trigger set_profiles_updated_at before update on public.profiles for each row execute function public.handle_updated_at();
 create trigger set_clients_updated_at before update on public.clients for each row execute function public.handle_updated_at();
@@ -239,3 +269,4 @@ create trigger set_tasks_updated_at before update on public.tasks for each row e
 create trigger set_daily_logs_updated_at before update on public.daily_logs for each row execute function public.handle_updated_at();
 create trigger set_prayer_logs_updated_at before update on public.prayer_logs for each row execute function public.handle_updated_at();
 create trigger set_app_settings_updated_at before update on public.app_settings for each row execute function public.handle_updated_at();
+create trigger set_time_sessions_updated_at before update on public.time_sessions for each row execute function public.handle_updated_at();

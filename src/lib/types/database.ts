@@ -8,6 +8,69 @@ export type TriggerType = 'একা থাকা' | 'boredom' | 'stress' | 'র
 export type PaymentType = 'অগ্রিম' | 'মাইলস্টোন' | 'চূড়ান্ত' | 'অন্যান্য';
 export type OutreachPlatform = 'Facebook' | 'LinkedIn' | 'Upwork' | 'রেফারেল' | 'অন্যান্য';
 
+export type TimeSessionCategory =
+  | 'client_work'
+  | 'deep_focus'
+  | 'client_hunting'
+  | 'english_practice'
+  | 'learning_class'
+  | 'admin_planning'
+  | 'break'
+  | 'prayer'
+  | 'exercise'
+  | 'wasted_time'
+  | 'other'
+  | 'Client Work'
+  | 'Deep Focus'
+  | 'Client Hunting'
+  | 'English Practice'
+  | 'Learning/Class'
+  | 'Admin/Planning'
+  | 'Break'
+  | 'Prayer'
+  | 'Exercise'
+  | 'Wasted Time'
+  | 'Other';
+
+export type BreakType =
+  | 'খাবার'
+  | 'নামাজ'
+  | 'হাঁটা/ব্যায়াম'
+  | 'বিশ্রাম'
+  | 'পরিবার'
+  | 'social_media'
+  | 'Social media'
+  | 'অন্যান্য'
+  | 'Other';
+
+export type SessionStatus = 'active' | 'paused' | 'completed' | 'cancelled' | 'running';
+
+export interface TimeSession {
+  id: string;
+  user_id: string;
+  client_id: string | null;
+  client_name?: string | null;
+  linked_client_id?: string | null;
+  linked_client_name?: string | null;
+  task_id: string | null;
+  task_title?: string | null;
+  linked_task_id?: string | null;
+  linked_task_title?: string | null;
+  category: TimeSessionCategory;
+  break_type: BreakType | null;
+  title: string;
+  note: string | null;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number;
+  status: SessionStatus;
+  is_pomodoro: boolean;
+  pomodoro_focus_minutes?: number | null;
+  pomodoro_break_minutes?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Profile {
   id: string;
   full_name: string;
@@ -20,6 +83,7 @@ export interface Client {
   id: string;
   user_id: string;
   name: string;
+  client_name?: string;
   project_name: string;
   contact_info: string;
   status: ClientStatus;

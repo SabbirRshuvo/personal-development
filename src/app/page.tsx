@@ -14,6 +14,8 @@ import { TopThreeCard } from '@/components/dashboard/TopThreeCard';
 import { TimeSummaryCard } from '@/components/dashboard/TimeSummaryCard';
 import { PrayerQuickBar } from '@/components/dashboard/PrayerQuickBar';
 import { DailyTaskList } from '@/components/dashboard/DailyTaskList';
+import { LiveWorkControl } from '@/components/timer/LiveWorkControl';
+import { WorkTimeline } from '@/components/timer/WorkTimeline';
 import {
   QuickAddTaskModal,
   QuickLogModal,
@@ -127,26 +129,32 @@ export default function TodayDashboardPage() {
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* 2. Top 3 Most Important Tasks Card */}
+      {/* 2. Live Work Control (1-tap quick start, active timer, break, pomodoro) */}
+      <LiveWorkControl />
+
+      {/* 3. Today's Work Timeline (Chronological timeline of tracked sessions) */}
+      <WorkTimeline />
+
+      {/* 4. Top 3 Most Important Tasks Card */}
       <TopThreeCard
         tasks={todayTasks}
         onToggleComplete={toggleTaskComplete}
         onOpenAddTask={() => setIsAddTaskOpen(true)}
       />
 
-      {/* 3. Today's Time Summary ("আজকের সময়") */}
+      {/* 5. Today's Time Summary ("আজকের সময়") */}
       <TimeSummaryCard
         dailyLog={dailyLog}
         onOpenQuickLog={() => setIsQuickLogOpen(true)}
       />
 
-      {/* 4. Five Prayers Quick Bar */}
+      {/* 6. Five Prayers Quick Bar */}
       <PrayerQuickBar
         prayerLog={prayerLog}
         onUpdatePrayerStatus={updatePrayerStatus}
       />
 
-      {/* 5. Daily Task List (Grouped by Priority, Carry-forward badges, reorder) */}
+      {/* 7. Daily Task List (Grouped by Priority, Carry-forward badges, reorder) */}
       <DailyTaskList
         tasks={todayTasks}
         onToggleComplete={toggleTaskComplete}

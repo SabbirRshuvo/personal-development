@@ -13,6 +13,9 @@ import {
   AppSettings,
   PrayerStatus,
   PrayerType,
+  TimeSession,
+  TimeSessionCategory,
+  BreakType,
 } from '@/lib/types/database';
 import {
   INITIAL_CLIENTS,
@@ -24,9 +27,31 @@ import {
   INITIAL_SETTINGS,
   INITIAL_URGE_LOGS,
   INITIAL_RELAPSE_LOGS,
+  INITIAL_TIME_SESSIONS,
 } from '@/lib/utils/demo-data';
 import { getTodayDateString } from '@/lib/utils/bangla';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
+
+export interface TrackedDayStats {
+  focusedWorkSeconds: number;
+  clientWorkSeconds: number;
+  englishSeconds: number;
+  learningSeconds: number;
+  huntingSeconds: number;
+  wastedSeconds: number;
+  breakSeconds: number;
+  prayerBreakSeconds: number;
+  totalTrackedSeconds: number;
+  pomodoroSessionsCount: number;
+  // Conveniences in minutes & counts
+  totalFocusMinutes: number;
+  breakMinutes: number;
+  englishMinutes: number;
+  huntingMinutes: number;
+  learningMinutes: number;
+  wastedMinutes: number;
+  completedPomodoros: number;
+}
 
 interface DataContextType {
   tasks: Task[];
@@ -37,7 +62,14 @@ interface DataContextType {
   huntingLogs: HuntingLog[];
   urgeLogs: UrgeLog[];
   relapseLogs: RelapseLog[];
+  timeSessions: TimeSession[];
+  todaySessions: TimeSession[];
+  activeSession: TimeSession | null;
+  todayTrackedStats: TrackedDayStats;
   settings: AppSettings;
+  language: 'bn' | 'en';
+  setLanguage: (lang: 'bn' | 'en') => void;
+  currentDate: string;
   isOnlineDemo: boolean;
   isSaving: boolean;
   selectedDate: string;
@@ -70,6 +102,32 @@ interface DataContextType {
   deleteRevenue: (id: string) => Promise<void>;
   addHuntingLog: (log: Omit<HuntingLog, 'id' | 'created_at' | 'user_id'>) => Promise<void>;
   deleteHuntingLog: (id: string) => Promise<void>;
+  // Live Timer & Work Timeline actions
+  startSession: (params: {
+    category: TimeSessionCategory;
+    clientId?: string | null;
+    taskId?: string | null;
+    title?: string;
+    note?: string;
+    isPomodoro?: boolean;
+    pomodoroFocusMinutes?: number;
+    pomodoroBreakMinutes?: number;
+  }) => Promise<TimeSession>;
+  pauseSession: (id?: string) => Promise<void>;
+  resumeSession: (id?: string) => Promise<void>;
+  stopSession: (id?: string) => Promise<TimeSession | null>;
+  startBreak: (
+    breakTypeOrParams?: BreakType | { breakType?: BreakType; note?: string },
+    maybeNote?: string
+  ) => Promise<TimeSession>;
+  resumeFocusFromBreak: (params?: {
+    category?: TimeSessionCategory;
+    clientId?: string | null;
+    taskId?: string | null;
+  }) => Promise<TimeSession>;
+  addPastSession: (session: Omit<TimeSession, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => Promise<TimeSession>;
+  updateSession: (id: string, updates: Partial<TimeSession>) => Promise<void>;
+  deleteSession: (id: string) => Promise<void>;
   // Settings
   updateSettings: (updates: Partial<AppSettings>) => Promise<void>;
   resetToDemoData: () => void;
@@ -88,6 +146,8 @@ const STORAGE_KEYS = {
   URGE: 'amar_discipline_urge_v2',
   RELAPSE: 'amar_discipline_relapse_v2',
   SETTINGS: 'amar_discipline_settings_v2',
+  TIME_SESSIONS: 'amar_discipline_time_sessions_v2',
+  ACTIVE_SESSION: 'amar_discipline_active_session_v2',
 };
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -100,6 +160,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [huntingLogs, setHuntingLogs] = useState<HuntingLog[]>([]);
   const [urgeLogs, setUrgeLogs] = useState<UrgeLog[]>([]);
   const [relapseLogs, setRelapseLogs] = useState<RelapseLog[]>([]);
+  const [timeSessions, setTimeSessions] = useState<TimeSession[]>([]);
+  const [activeSession, setActiveSession] = useState<TimeSession | null>(null);
   const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS);
   const [isSaving, setIsSaving] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -118,15 +180,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const storedUrge = localStorage.getItem(STORAGE_KEYS.URGE);
       const storedRelapse = localStorage.getItem(STORAGE_KEYS.RELAPSE);
       const storedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+      const storedSessions = localStorage.getItem(STORAGE_KEYS.TIME_SESSIONS);
+      const storedActive = localStorage.getItem(STORAGE_KEYS.ACTIVE_SESSION);
 
       let parsedTasks: Task[] = storedTasks ? JSON.parse(storedTasks) : INITIAL_TASKS;
       const parsedClients: Client[] = storedClients ? JSON.parse(storedClients) : INITIAL_CLIENTS;
       const todayStr = getTodayDateString();
+      setSelectedDate(todayStr);
 
       // Automatic Carry Forward Logic:
-      // Incomplete tasks from previous days must automatically carry forward to today.
-      // Badge: "আগের বাকি কাজ"
-      // Do not duplicate the task; preserve original created date and history.
       let hasCarriedForward = false;
       parsedTasks = parsedTasks.map((t) => {
         if (t.status !== 'সম্পন্ন' && t.due_date < todayStr) {
@@ -162,6 +224,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUrgeLogs(storedUrge ? JSON.parse(storedUrge) : INITIAL_URGE_LOGS);
       setRelapseLogs(storedRelapse ? JSON.parse(storedRelapse) : INITIAL_RELAPSE_LOGS);
       setSettings(storedSettings ? JSON.parse(storedSettings) : INITIAL_SETTINGS);
+      setTimeSessions(storedSessions ? JSON.parse(storedSessions) : INITIAL_TIME_SESSIONS);
+      setActiveSession(storedActive ? JSON.parse(storedActive) : null);
 
       if (hasCarriedForward) {
         localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(parsedTasks));
@@ -175,6 +239,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRevenue(INITIAL_REVENUE);
       setHuntingLogs(INITIAL_HUNTING_LOGS);
       setUrgeLogs(INITIAL_URGE_LOGS);
+      setTimeSessions(INITIAL_TIME_SESSIONS);
       setSettings(INITIAL_SETTINGS);
     } finally {
       setIsInitialized(true);
@@ -194,30 +259,143 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(STORAGE_KEYS.URGE, JSON.stringify(urgeLogs));
       localStorage.setItem(STORAGE_KEYS.RELAPSE, JSON.stringify(relapseLogs));
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+      localStorage.setItem(STORAGE_KEYS.TIME_SESSIONS, JSON.stringify(timeSessions));
+      if (activeSession) {
+        localStorage.setItem(STORAGE_KEYS.ACTIVE_SESSION, JSON.stringify(activeSession));
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION);
+      }
     } catch (e) {
       console.warn('LocalStorage save failed:', e);
     }
-  }, [tasks, clients, allDailyLogs, allPrayerLogs, revenue, huntingLogs, urgeLogs, relapseLogs, settings, isInitialized]);
+  }, [tasks, clients, allDailyLogs, allPrayerLogs, revenue, huntingLogs, urgeLogs, relapseLogs, settings, timeSessions, activeSession, isInitialized]);
 
   useEffect(() => {
     saveStateToLocal();
   }, [saveStateToLocal]);
 
-  // Current Daily Log for selectedDate (defaults to today)
+  // Aggregate stats from time sessions for selectedDate
+  const todayTrackedStats: TrackedDayStats = useMemo(() => {
+    const daySessions = timeSessions.filter((s) => s.started_at.startsWith(selectedDate));
+    let focusedWorkSeconds = 0;
+    let clientWorkSeconds = 0;
+    let englishSeconds = 0;
+    let learningSeconds = 0;
+    let huntingSeconds = 0;
+    let wastedSeconds = 0;
+    let breakSeconds = 0;
+    let prayerBreakSeconds = 0;
+    let totalTrackedSeconds = 0;
+    let pomodoroSessionsCount = 0;
+
+    daySessions.forEach((s) => {
+      const dur = s.duration_seconds || 0;
+      totalTrackedSeconds += dur;
+      if (s.is_pomodoro && s.status === 'completed') {
+        pomodoroSessionsCount += 1;
+      }
+
+      switch (s.category) {
+        case 'deep_focus':
+        case 'Deep Focus':
+        case 'admin_planning':
+        case 'Admin/Planning':
+        case 'other':
+        case 'Other':
+          focusedWorkSeconds += dur;
+          break;
+        case 'client_work':
+        case 'Client Work':
+          clientWorkSeconds += dur;
+          focusedWorkSeconds += dur;
+          break;
+        case 'english_practice':
+        case 'English Practice':
+          englishSeconds += dur;
+          focusedWorkSeconds += dur;
+          break;
+        case 'learning_class':
+        case 'Learning/Class':
+          learningSeconds += dur;
+          focusedWorkSeconds += dur;
+          break;
+        case 'client_hunting':
+        case 'Client Hunting':
+          huntingSeconds += dur;
+          break;
+        case 'wasted_time':
+        case 'Wasted Time':
+          wastedSeconds += dur;
+          break;
+        case 'break':
+        case 'Break':
+        case 'exercise':
+        case 'Exercise':
+          breakSeconds += dur;
+          break;
+        case 'prayer':
+        case 'Prayer':
+          prayerBreakSeconds += dur;
+          breakSeconds += dur;
+          break;
+        default:
+          focusedWorkSeconds += dur;
+          break;
+      }
+    });
+
+    return {
+      focusedWorkSeconds,
+      clientWorkSeconds,
+      englishSeconds,
+      learningSeconds,
+      huntingSeconds,
+      wastedSeconds,
+      breakSeconds,
+      prayerBreakSeconds,
+      totalTrackedSeconds,
+      pomodoroSessionsCount,
+      totalFocusMinutes: Math.round(focusedWorkSeconds / 60),
+      breakMinutes: Math.round(breakSeconds / 60),
+      englishMinutes: Math.round(englishSeconds / 60),
+      huntingMinutes: Math.round(huntingSeconds / 60),
+      learningMinutes: Math.round(learningSeconds / 60),
+      wastedMinutes: Math.round(wastedSeconds / 60),
+      completedPomodoros: pomodoroSessionsCount,
+    };
+  }, [timeSessions, selectedDate]);
+
+  // Current Daily Log for selectedDate (seamlessly blends tracked sessions)
   const currentDailyLog: DailyLog = useMemo(() => {
-    if (allDailyLogs[selectedDate]) {
-      return allDailyLogs[selectedDate];
+    const raw = allDailyLogs[selectedDate];
+    // If tracked sessions exist for this date, automatically reflect them!
+    const trackedFocusedHours = Number((todayTrackedStats.focusedWorkSeconds / 3600).toFixed(1));
+    const trackedClientHours = Number((todayTrackedStats.clientWorkSeconds / 3600).toFixed(1));
+    const trackedEnglishHours = Number((todayTrackedStats.englishSeconds / 3600).toFixed(1));
+    const trackedHuntingMinutes = Math.round(todayTrackedStats.huntingSeconds / 60);
+    const trackedWastedMinutes = Math.round(todayTrackedStats.wastedSeconds / 60);
+
+    if (raw) {
+      return {
+        ...raw,
+        focused_work_hours: trackedFocusedHours > 0 ? trackedFocusedHours : raw.focused_work_hours,
+        client_work_hours: trackedClientHours > 0 ? trackedClientHours : raw.client_work_hours,
+        english_hours: trackedEnglishHours > 0 ? trackedEnglishHours : raw.english_hours,
+        hunting_minutes: trackedHuntingMinutes > 0 ? trackedHuntingMinutes : raw.hunting_minutes,
+        wasted_minutes: trackedWastedMinutes > 0 ? trackedWastedMinutes : raw.wasted_minutes,
+      };
     }
+
     return {
       id: `daily-log-${selectedDate}`,
       user_id: 'local-user',
       date: selectedDate,
-      focused_work_hours: 0,
-      client_work_hours: 0,
+      focused_work_hours: trackedFocusedHours || 0,
+      client_work_hours: trackedClientHours || 0,
       learning_hours: 0,
-      english_hours: 0,
-      hunting_minutes: 0,
-      wasted_minutes: 0,
+      english_hours: trackedEnglishHours || 0,
+      hunting_minutes: trackedHuntingMinutes || 0,
+      wasted_minutes: trackedWastedMinutes || 0,
       sleep_hours: 7,
       mood: 'ভালো',
       energy_level: 4,
@@ -227,7 +405,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       created_at: '2026-11-14T00:00:00.000Z',
       updated_at: '2026-11-14T00:00:00.000Z',
     };
-  }, [allDailyLogs, selectedDate]);
+  }, [allDailyLogs, selectedDate, todayTrackedStats]);
 
   // Current Prayer Log for selectedDate
   const currentPrayerLog: PrayerLog = useMemo(() => {
@@ -259,7 +437,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-
     setTasks((prev) => [newTask, ...prev]);
     setIsSaving(false);
     return newTask;
@@ -305,12 +482,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       prev.map((t) =>
         t.id === id
           ? {
-              ...t,
-              due_date: todayStr,
-              is_carried_forward: true,
-              carried_forward_count: (t.carried_forward_count || 0) + 1,
-              updated_at: new Date().toISOString(),
-            }
+            ...t,
+            due_date: todayStr,
+            is_carried_forward: true,
+            carried_forward_count: (t.carried_forward_count || 0) + 1,
+            updated_at: new Date().toISOString(),
+          }
           : t
       )
     );
@@ -447,7 +624,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     setRevenue((prev) => [newEntry, ...prev]);
 
-    // Update client paid_amount if client_id exists
     if (newEntry.client_id) {
       setClients((prev) =>
         prev.map((c) => {
@@ -492,6 +668,285 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsSaving(false);
   };
 
+  // ==============================================================================
+  // SECTION 9: LIVE FOCUS TIMER & TIME BLOCKS ACTIONS
+  // ==============================================================================
+
+  const startSession = async (params: {
+    category: TimeSessionCategory;
+    clientId?: string | null;
+    taskId?: string | null;
+    title?: string;
+    note?: string;
+    isPomodoro?: boolean;
+    pomodoroFocusMinutes?: number;
+    pomodoroBreakMinutes?: number;
+  }): Promise<TimeSession> => {
+    setIsSaving(true);
+    const nowIso = new Date().toISOString();
+
+    // Prevent overlapping sessions: Stop any currently active session immediately
+    if (activeSession) {
+      const endedAt = nowIso;
+      const startMs = new Date(activeSession.started_at).getTime();
+      const endMs = new Date(endedAt).getTime();
+      const durSecs = Math.max(0, Math.round((endMs - startMs) / 1000));
+
+      const completedPrevious: TimeSession = {
+        ...activeSession,
+        ended_at: endedAt,
+        duration_seconds: durSecs,
+        status: 'completed',
+        updated_at: nowIso,
+      };
+
+      setTimeSessions((prev) => [
+        completedPrevious,
+        ...prev.filter((s) => s.id !== activeSession.id),
+      ]);
+    }
+
+    const selectedClient = clients.find((c) => c.id === params.clientId);
+    const selectedTask = tasks.find((t) => t.id === params.taskId);
+
+    const categoryTitles: Record<string, string> = {
+      client_work: selectedClient ? `${selectedClient.name} প্রজেক্ট কাজ` : 'ক্লায়েন্ট কাজ',
+      deep_focus: 'ডিপ ফোকাস সেশন',
+      client_hunting: 'ক্লায়েন্ট হান্টিং ও আউটরিচ',
+      english_practice: 'ইংরেজি কমিউনিকেশন চর্চা',
+      learning_class: 'লার্নিং ও ক্লাস সেশন',
+      admin_planning: 'প্ল্যানিং ও পর্যালোচনা',
+      break: 'বিশ্রাম বিরতি',
+      prayer: 'নামাজ বিরতি',
+      exercise: 'হাঁটা ও শরীরচর্চা',
+      wasted_time: 'অনাকাঙ্ক্ষিত অপচয়',
+      other: 'অন্যান্য কাজ',
+    };
+
+    const newSession: TimeSession = {
+      id: `session-${Date.now()}`,
+      user_id: 'local-user',
+      client_id: params.clientId || null,
+      client_name: selectedClient ? selectedClient.name : undefined,
+      task_id: params.taskId || null,
+      task_title: selectedTask ? selectedTask.title : undefined,
+      category: params.category,
+      break_type: null,
+      title: params.title || (selectedTask ? selectedTask.title : categoryTitles[params.category]),
+      note: params.note || '',
+      started_at: nowIso,
+      ended_at: null,
+      duration_seconds: 0,
+      status: 'active',
+      is_pomodoro: Boolean(params.isPomodoro),
+      pomodoro_focus_minutes: params.pomodoroFocusMinutes || (params.isPomodoro ? 25 : null),
+      pomodoro_break_minutes: params.pomodoroBreakMinutes || (params.isPomodoro ? 5 : null),
+      created_at: nowIso,
+      updated_at: nowIso,
+    };
+
+    setActiveSession(newSession);
+    setTimeSessions((prev) => [newSession, ...prev]);
+    setIsSaving(false);
+    return newSession;
+  };
+
+  const pauseSession = async (id?: string) => {
+    setIsSaving(true);
+    const targetId = id || activeSession?.id;
+    const nowIso = new Date().toISOString();
+    if (activeSession && (!targetId || activeSession.id === targetId)) {
+      const updated = { ...activeSession, status: 'paused' as const, updated_at: nowIso };
+      setActiveSession(updated);
+      setTimeSessions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    }
+    setIsSaving(false);
+  };
+
+  const resumeSession = async (id?: string) => {
+    setIsSaving(true);
+    const targetId = id || activeSession?.id;
+    const nowIso = new Date().toISOString();
+    if (activeSession && (!targetId || activeSession.id === targetId)) {
+      const updated = { ...activeSession, status: 'active' as const, updated_at: nowIso };
+      setActiveSession(updated);
+      setTimeSessions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    }
+    setIsSaving(false);
+  };
+
+  const stopSession = async (id?: string): Promise<TimeSession | null> => {
+    setIsSaving(true);
+    const targetSession = id ? timeSessions.find((s) => s.id === id) : activeSession;
+    if (!targetSession) {
+      setIsSaving(false);
+      return null;
+    }
+
+    const nowIso = new Date().toISOString();
+    const startMs = new Date(targetSession.started_at).getTime();
+    const endMs = new Date(nowIso).getTime();
+    const duration_seconds = Math.max(0, Math.round((endMs - startMs) / 1000));
+
+    const completedSession: TimeSession = {
+      ...targetSession,
+      ended_at: nowIso,
+      duration_seconds,
+      status: 'completed',
+      updated_at: nowIso,
+    };
+
+    setTimeSessions((prev) =>
+      prev.map((s) => (s.id === targetSession.id ? completedSession : s))
+    );
+
+    if (activeSession?.id === targetSession.id) {
+      setActiveSession(null);
+    }
+
+    setIsSaving(false);
+    return completedSession;
+  };
+
+  const startBreak = async (
+    breakTypeOrParams?: BreakType | { breakType?: BreakType; note?: string },
+    maybeNote?: string
+  ): Promise<TimeSession> => {
+    setIsSaving(true);
+    const nowIso = new Date().toISOString();
+
+    let breakType: BreakType = 'বিশ্রাম';
+    let breakNote: string | undefined = undefined;
+
+    if (typeof breakTypeOrParams === 'object' && breakTypeOrParams !== null) {
+      if (breakTypeOrParams.breakType) breakType = breakTypeOrParams.breakType;
+      if (breakTypeOrParams.note) breakNote = breakTypeOrParams.note;
+    } else if (typeof breakTypeOrParams === 'string') {
+      breakType = breakTypeOrParams;
+      breakNote = maybeNote;
+    }
+
+    // 1. If focus session is active, stop it at this exact moment
+    if (
+      activeSession &&
+      activeSession.category !== 'break' &&
+      activeSession.category !== 'Break' &&
+      activeSession.category !== 'prayer' &&
+      activeSession.category !== 'Prayer'
+    ) {
+      const startMs = new Date(activeSession.started_at).getTime();
+      const endMs = new Date(nowIso).getTime();
+      const durSecs = Math.max(0, Math.round((endMs - startMs) / 1000));
+
+      const completedFocus: TimeSession = {
+        ...activeSession,
+        ended_at: nowIso,
+        duration_seconds: durSecs,
+        status: 'completed',
+        updated_at: nowIso,
+      };
+
+      setTimeSessions((prev) => [
+        completedFocus,
+        ...prev.filter((s) => s.id !== activeSession.id),
+      ]);
+    }
+
+    // 2. Start new break session immediately
+    const isPrayer = breakType === 'নামাজ';
+    const breakCategory: TimeSessionCategory = isPrayer ? 'prayer' : 'break';
+
+    const newBreakSession: TimeSession = {
+      id: `break-${Date.now()}`,
+      user_id: 'local-user',
+      client_id: null,
+      task_id: null,
+      category: breakCategory,
+      break_type: breakType,
+      title: isPrayer ? 'নামাজ ও দোয়া বিরতি' : `বিরতি (${breakType})`,
+      note: breakNote || '',
+      started_at: nowIso,
+      ended_at: null,
+      duration_seconds: 0,
+      status: 'active',
+      is_pomodoro: false,
+      created_at: nowIso,
+      updated_at: nowIso,
+    };
+
+    setActiveSession(newBreakSession);
+    setTimeSessions((prev) => [newBreakSession, ...prev]);
+    setIsSaving(false);
+    return newBreakSession;
+  };
+
+  const resumeFocusFromBreak = async (params?: {
+    category?: TimeSessionCategory;
+    clientId?: string | null;
+    taskId?: string | null;
+  }): Promise<TimeSession> => {
+    // 1. Stop break session
+    if (activeSession) {
+      await stopSession(activeSession.id);
+    }
+    // 2. Start focus session
+    return startSession({
+      category: params?.category || 'deep_focus',
+      clientId: params?.clientId,
+      taskId: params?.taskId,
+    });
+  };
+
+  const addPastSession = async (
+    sessionData: Omit<TimeSession, 'id' | 'created_at' | 'updated_at' | 'user_id'>
+  ): Promise<TimeSession> => {
+    setIsSaving(true);
+    const nowIso = new Date().toISOString();
+    const newSession: TimeSession = {
+      ...sessionData,
+      id: `session-${Date.now()}`,
+      user_id: 'local-user',
+      status: 'completed',
+      created_at: nowIso,
+      updated_at: nowIso,
+    };
+    setTimeSessions((prev) => [newSession, ...prev]);
+    setIsSaving(false);
+    return newSession;
+  };
+
+  const updateSession = async (id: string, updates: Partial<TimeSession>) => {
+    setIsSaving(true);
+    const nowIso = new Date().toISOString();
+    setTimeSessions((prev) =>
+      prev.map((s) => {
+        if (s.id === id) {
+          const updated = { ...s, ...updates, updated_at: nowIso };
+          if (updated.started_at && updated.ended_at) {
+            const sMs = new Date(updated.started_at).getTime();
+            const eMs = new Date(updated.ended_at).getTime();
+            updated.duration_seconds = Math.max(0, Math.round((eMs - sMs) / 1000));
+          }
+          return updated;
+        }
+        return s;
+      })
+    );
+    if (activeSession?.id === id) {
+      setActiveSession((prev) => (prev ? { ...prev, ...updates, updated_at: nowIso } : null));
+    }
+    setIsSaving(false);
+  };
+
+  const deleteSession = async (id: string) => {
+    setIsSaving(true);
+    setTimeSessions((prev) => prev.filter((s) => s.id !== id));
+    if (activeSession?.id === id) {
+      setActiveSession(null);
+    }
+    setIsSaving(false);
+  };
+
   // SETTINGS ACTIONS
   const updateSettings = async (updates: Partial<AppSettings>) => {
     setIsSaving(true);
@@ -513,6 +968,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setHuntingLogs(INITIAL_HUNTING_LOGS);
     setUrgeLogs(INITIAL_URGE_LOGS);
     setRelapseLogs([]);
+    setTimeSessions(INITIAL_TIME_SESSIONS);
+    setActiveSession(null);
     setSettings(INITIAL_SETTINGS);
   };
 
@@ -526,6 +983,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setHuntingLogs([]);
     setUrgeLogs([]);
     setRelapseLogs([]);
+    setTimeSessions([]);
+    setActiveSession(null);
   };
 
   return (
@@ -539,7 +998,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         huntingLogs,
         urgeLogs,
         relapseLogs,
+        timeSessions,
+        todaySessions: timeSessions.filter((s) => s.started_at.startsWith(selectedDate)),
+        activeSession,
+        todayTrackedStats,
         settings,
+        language: 'bn',
+        setLanguage: () => {},
+        currentDate: selectedDate,
         isOnlineDemo: !supabaseConnected,
         isSaving,
         selectedDate,
@@ -562,6 +1028,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deleteRevenue,
         addHuntingLog,
         deleteHuntingLog,
+        startSession,
+        pauseSession,
+        resumeSession,
+        stopSession,
+        startBreak,
+        resumeFocusFromBreak,
+        addPastSession,
+        updateSession,
+        deleteSession,
         updateSettings,
         resetToDemoData,
         clearAllUserData,

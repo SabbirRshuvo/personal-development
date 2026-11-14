@@ -4,6 +4,7 @@ import React from 'react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
+import { GlobalFloatingTimer } from '@/components/timer/GlobalFloatingTimer';
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -15,6 +16,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           {children}
         </main>
       </div>
+      <GlobalFloatingTimer />
       <BottomNav />
     </div>
   );
