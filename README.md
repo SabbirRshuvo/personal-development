@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# আমার ডিসিপ্লিন (Amar Discipline)
+> **“প্রতিদিনের কাজ, ইবাদত ও উন্নতির হিসাব”**
 
-## Getting Started
+একটি প্রোডাকশন-কোয়ালিটি, মোবাইল-ফার্স্ট, পূর্ণাঙ্গ বাংলা ব্যক্তিগত প্রডাক্টিভিটি ও ডিসিপ্লিন ওয়েব অ্যাপ্লিকেশন। একক মালিকানাধীন (Single-owner personal app) হিসেবে ডিজাইনকৃত, যা ব্যবহারকারীর দৈনন্দিন কাজ, ক্লায়েন্ট ডেলিভারি, পাঁচ ওয়াক্ত নামাজ, লার্নিং, ক্লায়েন্ট হান্টিং এবং আত্মশৃঙ্খলার (Urge & Relapse Prevention) পরিপূর্ণ হিসাব সংরক্ষণ করে।
 
-First, run the development server:
+---
+
+## ✨ মূল বৈশিষ্ঠ্যসমূহ (Key Features)
+
+### ১. আজ (Today Dashboard)
+- **দৈনিক ৫ মিনিটের হিসাব:** সকালের শুভেচ্ছা “আসসালামু আলাইকুম, আজকের মূল লক্ষ্য কী?”
+- **এশিয়া/ঢাকা টাইমজোন ও বাংলা ক্যালেন্ডার:** খাঁটি বাংলা তারিখ ও বার।
+- **দৈনিক অগ্রগতি রিং (Progress Ring):** কতটি কাজ শেষ এবং কতটি বাকি তার ভিজ্যুয়াল পার্সেন্টেজ।
+- **আজকের Top ৩ কার্ড:** সবচেয়ে গুরুত্বপূর্ণ ৩টি কাজ এক ক্লিকে দেখার ও টিক দেওয়ার সুবিধা (সাফল্যে কনফেটি সেলিব্রেশন)।
+- **আজকের সময় সারাংশ:** ডিপ ফোকাস কাজ, ইংরেজি চর্চা, ক্লায়েন্ট হান্টিং, নষ্ট সময় ও ঘুমের সময়।
+- **পাঁচ ওয়াক্ত নামাজ বার:** ফজর, যোহর, আসর, মাগরিব ও এশা (পড়েছি / জামাতে / একা / পড়িনি)।
+- **স্বয়ংক্রিয় ক্যারি-ফরোয়ার্ড (Carry-Forward Engine):** পূর্ববর্তী দিনের অপূর্ণ কাজগুলো কোনো ডুপ্লিকেট ছাড়া স্বয়ংক্রিয়ভাবে “আগের বাকি কাজ” ব্যাজসহ আজকের তালিকায় চলে আসে।
+
+### ২. কাজসমূহ (Task Management)
+- পূর্ণাঙ্গ CRUD (তৈরি, সম্পাদনা, ফিল্টার, ডিলিট, সম্পন্ন)।
+- অগ্রাধিকার (জরুরি, গুরুত্বপূর্ণ, সাধারণ) এবং স্ট্যাটাস (বাকি, চলছে, সম্পন্ন, আটকে আছে)।
+- ক্লায়েন্ট ও প্রজেক্ট অ্যাসোসিয়েশন, ব্লকার নোটস (Blocker notes) এবং ট্যাগিং।
+- “আজকের জন্য পুনরায় নির্ধারণ” (Reschedule for today) কুইক অ্যাকশন।
+
+### ৩. ক্লায়েন্ট (Client Management)
+- ক্লায়েন্টের নাম, প্রজেক্ট, যোগাযোগের লিঙ্ক, স্ট্যাটাস (চলমান, অপেক্ষায়, সম্পন্ন, সম্ভাব্য)।
+- আর্থিক হিসাব: মোট চুক্তির পরিমাণ, প্রাপ্ত টাকা এবং বাকি পাওনা।
+- ক্লায়েন্ট ডিটেইল মোডাল: কোন ক্লায়েন্টের কয়টি কাজ বাকি, কোন কাজ জরুরি, কত টাকা বকেয়া এবং পরবর্তী ফলো-আপ তারিখ।
+
+### ৪. ট্র্যাকার (Daily Time, Wellbeing & Habit Log)
+- স্লাইডার ও বাটন দিয়ে কয়েক সেকেন্ডে আপডেট।
+- কাজের সময় (Focus, Client, Learning, English, Hunting, Wasted, Sleep)।
+- সুস্থতা ও আত্মদর্শন (Mood, Energy 1-5, শরীরচর্চা, দিনের সেরা কাজ, আগামীকালের সংকল্প)।
+- **লজ্জাহীন ও বিজ্ঞানসম্মত Urge & Relapse ট্র্যাকার:** কখনো কোনো অপমানজনক বা হতাশার ভাষা ব্যবহার করা হয় না। কোনো রিল্যাপ্স হলে অনুপ্রেরণাদায়ী নির্দেশনা দেওয়া হয়:  
+  *“আজকের দিন শেষ নয়। এখন শুধু পরের ছোট সঠিক কাজটি বেছে নাও। পানি খাও, ওযু করো বা ১০ মিনিট হাঁটো, তারপর একটি ছোট কাজ শুরু করো।”*
+
+### ৫. urge সহায়তা (Urge Emergency Screen)
+- ক্ষতিকর তাড়নার মুহূর্তে শান্ত ও মনোযোগ বিঘ্নকারীহীন ফোকাসড স্ক্রিন।
+- **১০ মিনিটের কাউন্টডাউন টাইমার:** “এই urge স্থায়ী নয়—পরের ১০ মিনিট পার করো।”
+- **রিয়েল-টাইম শ্বাস-প্রশ্বাস গাইডেন্স (৪-৪-৬):** ৪ সেকেন্ড শ্বাস নাও, ৪ সেকেন্ড ধরে রাখো, ৬ সেকেন্ডে ছাড়ো।
+- তাৎক্ষণিক অ্যাকশন চেকলিস্ট (ফোন দূরে রাখা, ওযু করা, হাঁটা/পুশ-আপ, ছোট কাজে হাত দেওয়া)।
+- ১০ মিনিট পর চেক-ইন ও সেফটি পরামর্শ।
+
+### ৬. আয় ও হান্টিং (Revenue & Client Hunting)
+- **রেভিনিউ ট্র্যাকার:** ক্লায়েন্টভিত্তিক আয়, মাসিক আয়, বকেয়া এবং পেমেন্ট ধরন (অগ্রিম, মাইলস্টোন, চূড়ান্ত)।
+- **ক্লায়েন্ট হান্টিং ফানেল:** মেসেজ/প্রপোজাল পাঠানো → রেসপন্স রেট → কল শিডিউল → ক্লায়েন্ট ক্লোজিং।
+
+### ৭. রিপোর্ট (Analytics & Reports)
+- দিন, সপ্তাহ ও মাসব্যাপী ডেটা ফিল্টারিং।
+- Recharts দিয়ে তৈরি ইন্টারেক্টিভ চার্ট: সাপ্তাহিক কাজের সময়ের ট্রেন্ড, টাস্ক কমপ্লিশন বার চার্ট, ক্লায়েন্ট ওয়ার্কলোড পাই চার্ট।
+- **মাসিক হাইলাইট কার্ড:** বাংলা সংখ্যা ও টেক্সটে পুরো মাসের অগ্রগতি প্রতিবেদন।
+
+### ৮. সেটিংস (Settings & PWA)
+- নাম, লক্ষ্যমাত্রা, মুদ্রা প্রতীক (৳) কনফিগারেশন।
+- ডার্ক মোড / লাইট মোড টগল।
+- এক ক্লিকে টাস্ক ও রেভিনিউ ডেটা CSV ফাইলে এক্সপোর্ট।
+- **PWA সাপোর্ট:** মোবাইল বা কম্পিউটারে ইনস্টলেশন নির্দেশিকা এবং বাটন।
+
+---
+
+## 🛠 টেক স্ট্যাক (Tech Stack)
+
+- **Framework:** Next.js (App Router) + TypeScript
+- **Styling:** Tailwind CSS + Custom Design Tokens (Warm off-white, Emerald, Blue, Purple, Amber, Soft Coral)
+- **Typography:** `Hind Siliguri` (via Google Fonts / Next Font)
+- **Icons:** `lucide-react`
+- **Charts:** `recharts`
+- **Celebration:** `canvas-confetti`
+- **Database & Auth:** Supabase (PostgreSQL, Row Level Security, Triggers)
+- **PWA:** Web App Manifest + Service Worker + Standalone Support
+- **Resilient Fallback:** Supabase কী কনফিগার না থাকলেও সম্পূর্ণ ফিচারসহ লোকাল ডেমো মোডে চলবে।
+
+---
+
+## 🚀 সেটআপ ও ইনস্টলেশন নির্দেশিকা (Setup Guide)
+
+### ১. লোকাল প্রজেক্ট রান করা
+```bash
+# ডিপেন্ডেন্সি ইনস্টল করুন
+npm install
+
+# ডেভেলপমেন্ট সার্ভার চালু করুন
+npm run dev
+```
+ব্রাউজারে ভিজিট করুন: `http://localhost:3000`
+
+---
+
+### ২. Supabase ডাটাবেস ও অথেন্টিকেশন কনফিগারেশন
+
+১. [Supabase](https://supabase.com)-এ গিয়ে একটি নতুন প্রজেক্ট তৈরি করুন।
+২. আপনার Supabase ড্যাশবোর্ডের **SQL Editor** ট্যাবে যান।
+৩. প্রজেক্টের `supabase/migrations/20261114_init.sql` ফাইলটির সম্পূর্ণ কোড কপি করে SQL Editor-এ রান (Run) করুন।
+   - এটি স্বয়ংক্রিয়ভাবে ১১টি টেবিল (`profiles`, `clients`, `tasks`, `task_activity_history`, `daily_logs`, `prayer_logs`, `urge_logs`, `relapse_logs`, `revenue_entries`, `hunting_logs`, `app_settings`) তৈরি করবে।
+   - সব টেবিলে **Row Level Security (RLS)** এবং `updated_at` ট্রিগার সক্রিয় করবে।
+৪. Supabase ড্যাশবোর্ডের **Project Settings → API** থেকে `Project URL` এবং `anon / public key` কপি করুন।
+৫. প্রজেক্টের রুটে `.env.local` ফাইল তৈরি করে কীগুলো পেস্ট করুন:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   ```
+৬. **Authentication সেটিংস:**
+   - **Authentication → URL Configuration**-এ গিয়ে `Site URL` দিন `http://localhost:3000` (বা আপনার প্রোডাকশন ডোমেইন)।
+   - Email Magic Link বা Password Authentication অন রাখুন।
+
+---
+
+### ৩. প্রোডাকশন বিল্ড ও ডিপ্লয়মেন্ট (Deployment)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# প্রোডাকশন বিল্ড টেস্ট
+npm run build
+
+# প্রোডাকশন সার্ভার রান
+npm run start
 ```
+Vercel-এ ডিপ্লয় করতে গিটহাবে পুশ করে Vercel-এ ইমপোর্ট করুন এবং Environment Variables-এ Supabase ক্রেডেনশিয়াল দিন।
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📱 PWA ইনস্টলেশন গাইড
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **অ্যান্ড্রয়েড ফোন (Chrome):**
+   - ব্রাউজারে সাইটটি ওপেন করুন।
+   - উপরে বা নিচের থ্রি-ডট মেনু চাপুন → **“Add to Home screen”** বা **“Install app”** নির্বাচন করুন।
+2. **ডেস্কটপ (Chrome/Edge):**
+   - URL বারের ডানদিকের ইনস্টল আইকন চাপুন।
+3. **আইফোন (Safari):**
+   - নিচে শেয়ার বাটন চাপুন → **“Add to Home Screen”** নির্বাচন করুন।
